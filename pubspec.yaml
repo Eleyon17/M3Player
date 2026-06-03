@@ -17,7 +17,6 @@ dependencies:
   http: ^1.6.0
   implicitly_animated_reorderable_list_2: ^0.6.0
   just_audio: ^0.10.5
-  just_audio_background: ^0.0.1-beta.17
   just_audio_media_kit: ^2.1.0
   media_kit: ^1.2.6
   media_kit_libs_linux: ^1.2.1
