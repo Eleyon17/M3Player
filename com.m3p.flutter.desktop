@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=M3Player
+Comment=A beautiful material music player.
+Exec=m3p_flutter
+Icon=com.m3p.flutter
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Player;
