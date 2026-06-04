@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as Math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:implicitly_animated_reorderable_list_2/implicitly_animated_reorderable_list_2.dart';
@@ -6,7 +7,59 @@ import 'package:implicitly_animated_reorderable_list_2/transitions.dart';
 import '../providers/audio_provider.dart';
 import '../models/song.dart';
 import 'home_screen.dart'; // To access showHistoryProvider
+import 'widgets/bubbly_widgets.dart';
 
+class AnimatedBars extends StatefulWidget {
+  final Color color;
+  const AnimatedBars({Key? key, required this.color}) : super(key: key);
+
+  @override
+  _AnimatedBarsState createState() => _AnimatedBarsState();
+}
+
+class _AnimatedBarsState extends State<AnimatedBars> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: List.generate(3, (index) {
+          return AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final val = (Math.sin(_controller.value * Math.pi * 2 + index * 1.5) + 1) / 2;
+              return Container(
+                width: 4,
+                height: 8 + (12 * val),
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              );
+            },
+          );
+        }),
+      ),
+    );
+  }
+}
 class HistoryPanel extends ConsumerWidget {
   const HistoryPanel({Key? key}) : super(key: key);
 
@@ -114,12 +167,14 @@ class QueuePanel extends ConsumerWidget {
                 ),
                 Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.history),
+                    BubblyIconButton(
+                      icon: Icons.history,
                       onPressed: () => ref.read(showHistoryProvider.notifier).toggle(),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
+                    const SizedBox(width: 8),
+                    BubblyIconButton(
+                      icon: Icons.delete,
+                      iconColor: Theme.of(context).colorScheme.error,
                       onPressed: () => ref.read(queueProvider.notifier).clearQueue(),
                     ),
                   ],
@@ -169,7 +224,7 @@ class QueuePanel extends ConsumerWidget {
                               shape: BoxShape.circle,
                               color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                             ),
-                            child: Icon(Icons.volume_up, color: Theme.of(context).colorScheme.primary),
+                            child: AnimatedBars(color: Theme.of(context).colorScheme.primary),
                           ),
                         ),
                       ),

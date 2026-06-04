@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import '../models/song.dart';
@@ -250,7 +251,9 @@ class NavidromeClient {
     try {
       final allArtists = await getArtists();
       if (allArtists.isEmpty) return [];
-      allArtists.shuffle();
+      final now = DateTime.now();
+      final seed = now.year * 10000 + now.month * 100 + now.day;
+      allArtists.shuffle(Random(seed));
       return allArtists.take(count).toList();
     } catch (e) {
       return [];

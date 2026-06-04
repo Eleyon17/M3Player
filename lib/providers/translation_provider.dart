@@ -1,11 +1,28 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/lyrics_provider.dart';
 
 class TranslationLanguageNotifier extends Notifier<String> {
   @override
-  String build() => 'none';
+  String build() {
+    _loadLang();
+    return 'none';
+  }
+
+  Future<void> _loadLang() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey('translationLang')) {
+      state = prefs.getString('translationLang') ?? 'none';
+    }
+  }
+
+  Future<void> setLang(String lang) async {
+    state = lang;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('translationLang', lang);
+  }
 }
 
 final translationLanguageProvider = NotifierProvider<TranslationLanguageNotifier, String>(TranslationLanguageNotifier.new);

@@ -7,7 +7,11 @@ import 'widgets/bubbly_widgets.dart';
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/translation_provider.dart';
+import '../theme/theme_provider.dart';
 
 class DiscoverSearchQuery extends Notifier<String> {
   @override
@@ -33,7 +37,87 @@ class DiscoverPanel extends ConsumerStatefulWidget {
 class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
-  
+  bool _hasUpdate = false;
+  final String CURRENT_APP_VERSION = 'v3.3.6';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUpdate();
+  }
+
+  Future<void> _checkUpdate() async {
+    try {
+      final res = await http.get(Uri.parse('https://api.github.com/repos/Eleyon17/M3Player/releases/latest'));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['tag_name'] != null && data['tag_name'] != CURRENT_APP_VERSION) {
+          if (mounted) setState(() => _hasUpdate = true);
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _fetchChangelog() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      final res = await http.get(Uri.parse('https://api.github.com/repos/Eleyon17/M3Player/releases/latest'));
+      Navigator.pop(context); // pop loading
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final body = data['body'] ?? 'No changelog available.';
+        
+        if (mounted) {
+          setState(() => _hasUpdate = false);
+        }
+
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Changelog'),
+            content: SingleChildScrollView(child: Text(body)),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
+            ],
+          ),
+        );
+      } else {
+        throw Exception();
+      }
+    } catch (e) {
+      if (Navigator.canPop(context)) Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to load changelog.')));
+    }
+  }
+
+  void _promptLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Log Out'),
+        content: const Text('Are you sure you want to log out of M3Player?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('/login');
+              }
+            },
+            child: const Text('Log Out'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -57,7 +141,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                   value: 'none',
                   groupValue: ref.watch(translationLanguageProvider),
                   onChanged: (val) {
-                    ref.read(translationLanguageProvider.notifier).state = val!;
+                    ref.read(translationLanguageProvider.notifier).setLang(val!);
                     Navigator.pop(ctx);
                   },
                 ),
@@ -72,7 +156,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                   value: 'es',
                   groupValue: ref.watch(translationLanguageProvider),
                   onChanged: (val) {
-                    ref.read(translationLanguageProvider.notifier).state = val!;
+                    ref.read(translationLanguageProvider.notifier).setLang(val!);
                     Navigator.pop(ctx);
                   },
                 ),
@@ -87,7 +171,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                   value: 'en',
                   groupValue: ref.watch(translationLanguageProvider),
                   onChanged: (val) {
-                    ref.read(translationLanguageProvider.notifier).state = val!;
+                    ref.read(translationLanguageProvider.notifier).setLang(val!);
                     Navigator.pop(ctx);
                   },
                 ),
@@ -118,42 +202,39 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: "Search...",
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.only(left: 12.0, right: 8.0),
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.only(left: 12.0, right: 8.0),
+                      child: Icon(Icons.search),
+                    ),
+                    suffixIcon: Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.search),
-                          const SizedBox(width: 8),
-                          DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: ref.watch(searchFilterProvider),
-                              isDense: true,
-                              items: ['All', 'Songs', 'Albums', 'Artists']
-                                  .map((f) => DropdownMenuItem(value: f, child: Text(f, style: const TextStyle(fontSize: 14))))
-                                  .toList(),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  ref.read(searchFilterProvider.notifier).state = val;
-                                }
+                          if (searchQuery.isNotEmpty)
+                            IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                ref.read(discoverSearchQueryProvider.notifier).state = '';
                               },
                             ),
+                          const SizedBox(width: 4),
+                          ActionChip(
+                            label: Text(ref.watch(searchFilterProvider), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            onPressed: () {
+                              final filters = ['All', 'Songs', 'Artists', 'Albums', 'Favorites'];
+                              final current = ref.read(searchFilterProvider);
+                              final nextIndex = (filters.indexOf(current) + 1) % filters.length;
+                              ref.read(searchFilterProvider.notifier).state = filters[nextIndex];
+                            },
                           ),
-                          const SizedBox(width: 8),
-                          Container(height: 24, width: 1, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)),
-                          const SizedBox(width: 8),
                         ],
                       ),
                     ),
-                    suffixIcon: searchQuery.isNotEmpty 
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _searchController.clear();
-                              ref.read(discoverSearchQueryProvider.notifier).state = '';
-                            },
-                          )
-                        : null,
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     border: OutlineInputBorder(
@@ -171,12 +252,21 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
               ),
               const SizedBox(width: 8),
               PopupMenuButton<String>(
-                icon: const Icon(Icons.settings),
+                icon: Badge(
+                  isLabelVisible: _hasUpdate,
+                  child: const Icon(Icons.settings),
+                ),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 offset: const Offset(0, 48),
                 onSelected: (value) {
                   if (value == 'translations') {
                     _showTranslationsDialog(context, ref);
+                  } else if (value == 'theme') {
+                    ref.read(themeProvider.notifier).toggleTheme();
+                  } else if (value == 'changelog') {
+                    _fetchChangelog();
+                  } else if (value == 'logout') {
+                    _promptLogout();
                   }
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[

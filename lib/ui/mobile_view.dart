@@ -136,12 +136,20 @@ class _MobileViewState extends ConsumerState<MobileView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                BubblyIconButton(
-                  icon: currentSong.starred != null ? Icons.favorite : Icons.favorite_border,
-                  iconColor: currentSong.starred != null ? Colors.red : null,
+                BubblyButton(
                   onPressed: () {
                     ref.read(queueProvider.notifier).toggleFavorite();
                   },
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                    child: Icon(
+                      currentSong.starred != null ? Icons.favorite : Icons.favorite_border,
+                      key: ValueKey(currentSong.starred != null),
+                      color: currentSong.starred != null ? Colors.red : Theme.of(context).colorScheme.onSurface,
+                      size: 24.0,
+                    ),
+                  ),
                 ),
                 BubblyIconButton(
                   icon: Icons.download,
