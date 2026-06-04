@@ -140,6 +140,7 @@ class _InteractiveAlbumArtState extends ConsumerState<InteractiveAlbumArt> with 
     super.initState();
     _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
     _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    _fetchBio(); // Fetch preemptively
   }
 
   @override
@@ -155,10 +156,8 @@ class _InteractiveAlbumArtState extends ConsumerState<InteractiveAlbumArt> with 
         _isLoadingBio = false;
       });
       
-      // If currently flipped and looking at the bio, fetch the new one immediately
-      if (_isFlipped) {
-        _fetchBio();
-      }
+      // Fetch preemptively
+      _fetchBio();
     }
   }
 
@@ -203,7 +202,6 @@ class _InteractiveAlbumArtState extends ConsumerState<InteractiveAlbumArt> with 
   void _toggleFlip() {
     if (!_isFlipped) {
       _controller.forward();
-      _fetchBio();
     } else {
       _controller.reverse();
     }

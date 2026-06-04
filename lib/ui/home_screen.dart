@@ -66,11 +66,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                  Theme.of(context).colorScheme.surface,
-                  Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
-                ],
+                colors: Theme.of(context).brightness == Brightness.dark
+                  ? [
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                      Theme.of(context).colorScheme.surface,
+                      Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
+                    ]
+                  : [
+                      Theme.of(context).colorScheme.surface,
+                      Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                      Theme.of(context).colorScheme.surface,
+                    ],
               ),
             ),
           ),
@@ -78,7 +84,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // Subtle blurred overlay to retain texture
           if (currentSong != null)
             Opacity(
-              opacity: 0.3,
+              opacity: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.08,
               child: ImageFiltered(
                 imageFilter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
                 child: AnimatedSwitcher(

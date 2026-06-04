@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import '../providers/audio_provider.dart';
 import 'widgets/bubbly_widgets.dart';
+import 'widgets/wiggling_progress_bar.dart';
 
 class BottomControls extends ConsumerStatefulWidget {
   const BottomControls({Key? key}) : super(key: key);
@@ -32,11 +33,21 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
       child: Container(
         height: 90,
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Material(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
-          elevation: 8,
-          shadowColor: Colors.black.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(45),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(45),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
+                Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
+              ],
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            borderRadius: BorderRadius.circular(45),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Row(
@@ -145,23 +156,27 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         children: [
                           Text(_formatDuration(position)),
                           Expanded(
-                            child: Slider(
-                              value: (_dragValue ?? position.inMilliseconds.toDouble()).clamp(
-                                0.0, 
-                                duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 1.0
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                              child: WigglingProgressBar(
+                                value: (_dragValue ?? position.inMilliseconds.toDouble()).clamp(
+                                  0.0, 
+                                  duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 1.0
+                                ),
+                                max: duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 1.0,
+                                isPlaying: player.playing,
+                                onChanged: (val) {
+                                  setState(() {
+                                    _dragValue = val;
+                                  });
+                                },
+                                onChangeEnd: (val) {
+                                  player.seek(Duration(milliseconds: val.round()));
+                                  setState(() {
+                                    _dragValue = null;
+                                  });
+                                },
                               ),
-                              max: duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 1.0,
-                              onChanged: (val) {
-                                setState(() {
-                                  _dragValue = val;
-                                });
-                              },
-                              onChangeEnd: (val) {
-                                player.seek(Duration(milliseconds: val.round()));
-                                setState(() {
-                                  _dragValue = null;
-                                });
-                              },
                             ),
                           ),
                           Text(_formatDuration(duration)),
@@ -214,6 +229,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
             ),
           ],
         ),
+      ),
       ),
       ),
       ),

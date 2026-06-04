@@ -48,6 +48,17 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
     _checkUpdate();
   }
 
+  int _parseVersion(String v) {
+    final clean = v.replaceAll(RegExp(r'[^0-9.]'), '');
+    final parts = clean.split('.');
+    if (parts.length != 3) return 0;
+    try {
+      return int.parse(parts[0]) * 10000 + int.parse(parts[1]) * 100 + int.parse(parts[2]);
+    } catch (_) {
+      return 0;
+    }
+  }
+
   Future<void> _checkUpdate() async {
     try {
       final res = await http.get(Uri.parse('https://api.github.com/repos/Eleyon17/M3Player/releases/latest'));
@@ -55,15 +66,27 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
         final data = jsonDecode(res.body);
         final latestVersion = data['tag_name'];
         if (latestVersion != null) {
-          final prefs = await SharedPreferences.getInstance();
-          final lastReadVersion = prefs.getString('last_read_version');
-          if (latestVersion != CURRENT_APP_VERSION || lastReadVersion != latestVersion) {
-            if (mounted) {
-              setState(() {
-                _hasUpdate = true;
-                _latestVersionTag = latestVersion;
-              });
+          final current = _parseVersion(CURRENT_APP_VERSION);
+          final latest = _parseVersion(latestVersion);
+          
+          if (latest > current) {
+            final prefs = await SharedPreferences.getInstance();
+            final lastReadVersion = prefs.getString('last_read_version');
+            if (lastReadVersion != latestVersion) {
+              if (mounted) {
+                setState(() {
+                  _hasUpdate = true;
+                  _latestVersionTag = latestVersion;
+                });
+              }
             }
+          } else {
+             if (mounted) {
+                setState(() {
+                  _hasUpdate = false;
+                  _latestVersionTag = latestVersion; // Still save it for update button just in case
+                });
+             }
           }
         }
       }
@@ -102,7 +125,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                 title: Text('Changelog ($CURRENT_APP_VERSION)'),
                 content: SingleChildScrollView(child: Text(body)),
                 actions: [
-                  if (_latestVersionTag != null && _latestVersionTag != CURRENT_APP_VERSION)
+                  if (_latestVersionTag != null && _parseVersion(_latestVersionTag!) > _parseVersion(CURRENT_APP_VERSION))
                     FilledButton.icon(
                       icon: const Icon(Icons.download),
                       label: Text('Update to $_latestVersionTag'),
@@ -338,35 +361,42 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
         
         Expanded(
           child: DefaultTabController(
-            length: 2,
+            length: 3,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: TabBar(
-                    isScrollable: false,
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    splashBorderRadius: BorderRadius.circular(30),
-                    labelPadding: const EdgeInsets.symmetric(vertical: 4.0),
-                  labelColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                  unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                  indicator: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(30),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TabBar(
+                        isScrollable: true,
+                        tabAlignment: TabAlignment.start,
+                        indicator: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        dividerColor: Colors.transparent,
+                        labelColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                        unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                        tabs: const [
+                          Tab(text: "Home"),
+                          Tab(text: "Playlists"),
+                          Tab(text: "Favorites"),
+                        ],
+                      ),
+                    ],
                   ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  tabs: const [
-                    Tab(text: "Home"),
-                    Tab(text: "Favorites"),
-                  ],
                 ),
-                ),
-                const Expanded(
+                 Expanded(
                   child: TabBarView(
                     children: [
-                      _NestedNav(initialRoute: _HomeTab()),
-                      _FavoritesTab(),
+                      _NestedNav(initialRoute: const _HomeTab()),
+                      _NestedNav(initialRoute: const _PlaylistsTab()),
+                      _NestedNav(initialRoute: const _FavoritesTab()),
                     ],
                   ),
                 ),
@@ -524,7 +554,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: songs.length,
                   itemBuilder: (context, index) => SizedBox(
-                    width: 260,
+                    width: 180,
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: SongTile(song: songs[index], showActions: false),
@@ -619,9 +649,43 @@ class _FavoritesTab extends ConsumerWidget {
           }).toList();
         }
         
+        if (songs.isEmpty) return const Center(child: Text("No favorites yet."));
+        
         return ListView.builder(
           itemCount: songs.length,
           itemBuilder: (context, index) => SongTile(song: songs[index]),
+        );
+      },
+    );
+  }
+}
+
+class _PlaylistsTab extends ConsumerWidget {
+  const _PlaylistsTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder<List<dynamic>>(
+      future: ref.read(navidromeClientProvider).getPlaylists(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final playlists = snapshot.data!;
+        if (playlists.isEmpty) return const Center(child: Text("No playlists yet."));
+        return ListView.builder(
+          itemCount: playlists.length,
+          itemBuilder: (context, index) {
+            final p = playlists[index];
+            return ListTile(
+              leading: const Icon(Icons.queue_music),
+              title: Text(p['name'] ?? 'Playlist'),
+              subtitle: Text('${p['songCount'] ?? 0} tracks'),
+              onTap: () async {
+                final api = ref.read(navidromeClientProvider);
+                final songs = await api.getPlaylistSongs(p['id']);
+                ref.read(queueProvider.notifier).addListToQueue(songs);
+              },
+            );
+          },
         );
       },
     );

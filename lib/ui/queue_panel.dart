@@ -265,29 +265,36 @@ class QueuePanel extends ConsumerWidget {
                     ),
                 ],
                 Expanded(
-                  child: queue.isEmpty && queueState.currentSong == null
-                      ? const Center(child: Text('Queue is empty.', style: TextStyle(color: Colors.white54)))
-                      : ImplicitlyAnimatedReorderableList<Song>(
-                    items: queue,
-                    areItemsTheSame: (oldItem, newItem) => oldItem.id == newItem.id,
-                    onReorderFinished: (item, from, to, newItems) {
-                      ref.read(queueProvider.notifier).updateQueue(newItems);
-                    },
-                    insertDuration: const Duration(milliseconds: 200),
-                    removeDuration: const Duration(milliseconds: 200),
-                    itemBuilder: (context, itemAnimation, item, index) {
-                      return Reorderable(
-                        key: ValueKey(item.id),
-                        builder: (context, dragAnimation, inDrag) {
-                          return SizeFadeTransition(
-                            sizeFraction: 0.7,
-                            curve: Curves.easeInOut,
-                            animation: itemAnimation,
-                            child: _buildItem(context, item, api, queueState, dragAnimation, ref),
+                  child: Stack(
+                    children: [
+                      AnimatedOpacity(
+                        duration: const Duration(milliseconds: 300),
+                        opacity: queue.isEmpty && queueState.currentSong == null ? 1.0 : 0.0,
+                        child: const Center(child: Text('Queue is empty.', style: TextStyle(color: Colors.white54))),
+                      ),
+                      ImplicitlyAnimatedReorderableList<Song>(
+                        items: queue,
+                        areItemsTheSame: (oldItem, newItem) => oldItem.id == newItem.id,
+                        onReorderFinished: (item, from, to, newItems) {
+                          ref.read(queueProvider.notifier).updateQueue(newItems);
+                        },
+                        insertDuration: const Duration(milliseconds: 300),
+                        removeDuration: const Duration(milliseconds: 300),
+                        itemBuilder: (context, itemAnimation, item, index) {
+                          return Reorderable(
+                            key: ValueKey(item.id),
+                            builder: (context, dragAnimation, inDrag) {
+                              return SizeFadeTransition(
+                                sizeFraction: 0.7,
+                                curve: Curves.easeInOut,
+                                animation: itemAnimation,
+                                child: _buildItem(context, item, api, queueState, dragAnimation, ref),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
+                      ),
+                    ],
                   ),
                 ),
                 if (queue.length <= 3)

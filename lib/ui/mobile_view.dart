@@ -209,10 +209,8 @@ class _MobileViewState extends ConsumerState<MobileView> {
             Container(color: Theme.of(context).colorScheme.surface),
             
           Container(
-            color: Colors.black.withValues(alpha: 0.4),
-            child: Container(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
-              child: SafeArea(
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+            child: SafeArea(
                 child: Column(
                   children: [
                     Expanded(
@@ -224,7 +222,6 @@ class _MobileViewState extends ConsumerState<MobileView> {
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

@@ -305,4 +305,23 @@ class NavidromeClient {
       return [];
     }
   }
+
+  Future<List<dynamic>> getPlaylists() async {
+    try {
+      final response = await _fetch('getPlaylists.view');
+      return response['playlists']?['playlist'] as List<dynamic>? ?? [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Song>> getPlaylistSongs(String id) async {
+    try {
+      final response = await _fetch('getPlaylist.view', 'id=$id');
+      final songsList = response['playlist']?['entry'] as List<dynamic>? ?? [];
+      return songsList.map((e) => Song.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }
