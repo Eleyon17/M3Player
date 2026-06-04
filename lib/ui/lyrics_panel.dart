@@ -61,7 +61,8 @@ class _LyricsPanelState extends ConsumerState<LyricsPanel> {
       return const Center(child: Text("No song playing"));
     }
 
-    final lyricsAsync = ref.watch(translatedLyricsProvider(currentSong));
+    final params = (id: currentSong.id, title: currentSong.title, artist: currentSong.artist);
+    final lyricsAsync = ref.watch(translatedLyricsProvider(params));
 
     return Container(
       decoration: BoxDecoration(

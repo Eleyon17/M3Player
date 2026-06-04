@@ -324,4 +324,97 @@ class NavidromeClient {
       return [];
     }
   }
+
+  // --- Playlist Manipulation API ---
+  Future<void> createPlaylist(String name) async {
+    try {
+      await _fetch('createPlaylist.view', 'name=${Uri.encodeComponent(name)}');
+    } catch (e) {
+      print("Error creating playlist: $e");
+    }
+  }
+
+  Future<void> deletePlaylist(String id) async {
+    try {
+      await _fetch('deletePlaylist.view', 'id=$id');
+    } catch (e) {
+      print("Error deleting playlist: $e");
+    }
+  }
+
+  Future<void> updatePlaylist(String id, {List<String>? songIdsToAdd, List<int>? songIndexesToRemove}) async {
+    try {
+      final params = <String>['playlistId=$id'];
+      if (songIdsToAdd != null) {
+        for (var songId in songIdsToAdd) {
+          params.add('songIdToAdd=$songId');
+        }
+      }
+      if (songIndexesToRemove != null) {
+        for (var index in songIndexesToRemove) {
+          params.add('songIndexToRemove=$index');
+        }
+      }
+      if (params.length > 1) {
+        await _fetch('updatePlaylist.view', params.join('&'));
+      }
+    } catch (e) {
+      print("Error updating playlist: $e");
+    }
+  }
+
+  // --- Play Queue Syncing API ---
+  Future<void> savePlayQueue(List<String> songIds, {String? currentId, int? positionMillis}) async {
+    try {
+      final params = <String>[];
+      for (var id in songIds) {
+        params.add('id=$id');
+      }
+      if (currentId != null) {
+        params.add('current=$currentId');
+      }
+      if (positionMillis != null) {
+        params.add('position=$positionMillis');
+      }
+      final paramString = params.join('&');
+      
+      // If the queue is huge, standard GET might exceed URI limits.
+      // We will use POST for savePlayQueue to avoid URI too long errors.
+      if (!isConfigured) throw Exception('NavidromeClient not configured');
+      final query = _getBaseParams();
+      final requestUrl = Uri.parse('$url/rest/savePlayQueue.view?$query');
+      
+      final response = await http.post(
+        requestUrl,
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: paramString,
+      );
+      
+      if (response.statusCode != 200) {
+        print("Error saving play queue: HTTP ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error saving play queue: $e");
+    }
+  }
+
+  Future<Map<String, dynamic>?> getPlayQueue() async {
+    try {
+      final response = await _fetch('getPlayQueue.view');
+      final playQueue = response['playQueue'];
+      if (playQueue == null) return null;
+      
+      final entryList = playQueue['entry'] as List<dynamic>? ?? [];
+      final songs = entryList.map((e) => Song.fromJson(e as Map<String, dynamic>)).toList();
+      
+      return {
+        'songs': songs,
+        'current': playQueue['current']?.toString(), // The ID of current song
+        'position': playQueue['position'], // in milliseconds
+      };
+    } catch (e) {
+      print("Error getting play queue: $e");
+      return null;
+    }
+  }
 }

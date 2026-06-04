@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
@@ -11,6 +14,10 @@ import 'lyrics_provider.dart';
 
 final navidromeClientProvider = Provider<NavidromeClient>((ref) {
   return NavidromeClient();
+});
+
+final navidromePlaylistsProvider = FutureProvider<List<dynamic>>((ref) async {
+  return ref.watch(navidromeClientProvider).getPlaylists();
 });
 
 final audioPlayerProvider = Provider<AudioPlayer>((ref) {
@@ -56,9 +63,95 @@ class QueueState {
 class QueueNotifier extends Notifier<QueueState> {
   @override
   QueueState build() {
-    // The player provider might not be initialized yet, so listen later or in a microtask
-    Future.microtask(() => _listenToPlayer());
+    Future.microtask(() {
+      _listenToPlayer();
+      _loadQueue();
+    });
     return QueueState();
+  }
+
+  @override
+  set state(QueueState value) {
+    super.state = value;
+    _saveQueue();
+  }
+
+  Timer? _saveTimer;
+
+  Future<void> _loadQueue() async {
+    try {
+      final queueData = await _api.getPlayQueue();
+      if (queueData != null) {
+        final songs = queueData['songs'] as List<Song>;
+        final currentId = queueData['current'] as String?;
+        
+        List<Song> savedHistory = [];
+        List<Song> savedQueue = [];
+        Song? savedCurrent;
+        
+        if (currentId != null) {
+          final currentIndex = songs.indexWhere((s) => s.id == currentId);
+          if (currentIndex != -1) {
+            // Server gives list chronologically: earlier history, current, queue
+            // But our history list has the most recent previous song at index 0.
+            savedHistory = songs.sublist(0, currentIndex).reversed.toList();
+            savedCurrent = songs[currentIndex];
+            savedQueue = songs.sublist(currentIndex + 1);
+          } else {
+            savedQueue = songs;
+          }
+        } else {
+          savedQueue = songs;
+        }
+        
+        if (savedCurrent != null || savedQueue.isNotEmpty || savedHistory.isNotEmpty) {
+          state = state.copyWith(currentSong: savedCurrent, queue: savedQueue, history: savedHistory);
+          if (savedCurrent != null) {
+            final itemsToPlay = <Song>[];
+            if (Platform.isAndroid || Platform.isIOS) {
+              if (savedHistory.isNotEmpty) itemsToPlay.add(savedHistory.first);
+              itemsToPlay.add(savedCurrent);
+              if (savedQueue.isNotEmpty) itemsToPlay.add(savedQueue.first);
+            } else {
+              itemsToPlay.add(savedCurrent);
+            }
+            final initialIndex = (Platform.isAndroid || Platform.isIOS) && savedHistory.isNotEmpty ? 1 : 0;
+            audioHandler.replaceQueue(itemsToPlay, initialIndex: initialIndex);
+            
+            // Note: Seeking to saved position is optional but neat!
+            final position = queueData['position'] as int?;
+            if (position != null && position > 0) {
+              audioHandler.seek(Duration(milliseconds: position));
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print("Error loading queue from server: $e");
+    }
+  }
+
+  void _saveQueue() {
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(seconds: 2), () async {
+      try {
+        final songIds = <String>[];
+        // History is stored most-recent first. Server wants chronological.
+        songIds.addAll(state.history.reversed.map((s) => s.id));
+        if (state.currentSong != null) songIds.add(state.currentSong!.id);
+        songIds.addAll(state.queue.map((s) => s.id));
+        
+        if (songIds.isNotEmpty) {
+          await _api.savePlayQueue(
+            songIds,
+            currentId: state.currentSong?.id,
+            positionMillis: _player.position.inMilliseconds,
+          );
+        }
+      } catch (e) {
+        print("Error saving queue to server: $e");
+      }
+    });
   }
 
   AudioPlayer get _player => ref.read(audioPlayerProvider);
@@ -170,7 +263,8 @@ class QueueNotifier extends Notifier<QueueState> {
   void _preloadLyrics() {
     for (int i = 0; i < 2 && i < state.queue.length; i++) {
       // Just reading the provider triggers the network fetch and caches the result
-      ref.read(translatedLyricsProvider(state.queue[i]).future);
+      final song = state.queue[i];
+      ref.read(translatedLyricsProvider((id: song.id, title: song.title, artist: song.artist)).future);
     }
   }
 

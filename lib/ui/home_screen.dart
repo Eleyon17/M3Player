@@ -73,9 +73,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
                     ]
                   : [
+                      Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                       Theme.of(context).colorScheme.surface,
-                      Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                      Theme.of(context).colorScheme.surface,
+                      Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
                     ],
               ),
             ),

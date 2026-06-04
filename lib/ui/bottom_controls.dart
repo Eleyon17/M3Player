@@ -40,8 +40,8 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
-                Theme.of(context).colorScheme.secondary.withValues(alpha: 0.15),
+                Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.95),
+                Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.95),
               ],
             ),
           ),

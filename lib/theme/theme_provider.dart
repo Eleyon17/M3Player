@@ -91,13 +91,13 @@ class ThemeNotifier extends Notifier<ThemeData> {
       final h = hsl.hue;
       final s = hsl.saturation;
       
-      final darkVibrant = isDarkMode ? (palette.darkVibrantColor?.color ?? baseColor) : (palette.lightVibrantColor?.color ?? baseColor);
+      final vibrantForTheme = isDarkMode ? (palette.darkVibrantColor?.color ?? baseColor) : (palette.lightVibrantColor?.color ?? baseColor);
 
       final scheme = ColorScheme.fromSeed(
         seedColor: baseColor,
         brightness: isDarkMode ? Brightness.dark : Brightness.light,
       ).copyWith(
-        secondary: darkVibrant,
+        secondary: vibrantForTheme,
       );
       
       state = _buildTheme(scheme);

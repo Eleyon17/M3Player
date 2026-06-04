@@ -366,28 +366,21 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TabBar(
-                        isScrollable: true,
-                        tabAlignment: TabAlignment.start,
-                        indicator: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        dividerColor: Colors.transparent,
-                        labelColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                        unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
-                        labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                        tabs: const [
-                          Tab(text: "Home"),
-                          Tab(text: "Playlists"),
-                          Tab(text: "Favorites"),
-                        ],
-                      ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: TabBar(
+                    indicator: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                    tabs: const [
+                      Tab(text: "Home"),
+                      Tab(text: "Playlists"),
+                      Tab(text: "Favorites"),
                     ],
                   ),
                 ),
@@ -665,29 +658,155 @@ class _PlaylistsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<List<dynamic>>(
-      future: ref.read(navidromeClientProvider).getPlaylists(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final playlists = snapshot.data!;
-        if (playlists.isEmpty) return const Center(child: Text("No playlists yet."));
-        return ListView.builder(
-          itemCount: playlists.length,
-          itemBuilder: (context, index) {
-            final p = playlists[index];
-            return ListTile(
-              leading: const Icon(Icons.queue_music),
-              title: Text(p['name'] ?? 'Playlist'),
-              subtitle: Text('${p['songCount'] ?? 0} tracks'),
-              onTap: () async {
-                final api = ref.read(navidromeClientProvider);
-                final songs = await api.getPlaylistSongs(p['id']);
-                ref.read(queueProvider.notifier).addListToQueue(songs);
-              },
+    final playlistsAsync = ref.watch(navidromePlaylistsProvider);
+    final api = ref.watch(navidromeClientProvider);
+    
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showDialog(context: context, builder: (context) {
+            final controller = TextEditingController();
+            return AlertDialog(
+              title: const Text('New Playlist'),
+              content: TextField(
+                controller: controller,
+                decoration: const InputDecoration(hintText: 'Playlist Name'),
+                autofocus: true,
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                FilledButton(onPressed: () async {
+                  if (controller.text.trim().isNotEmpty) {
+                    await api.createPlaylist(controller.text.trim());
+                    ref.invalidate(navidromePlaylistsProvider);
+                  }
+                  if (context.mounted) Navigator.pop(context);
+                }, child: const Text('Create')),
+              ],
             );
-          },
-        );
-      },
+          });
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('New Playlist'),
+      ),
+      body: playlistsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text("Error: $err")),
+        data: (playlists) {
+          if (playlists.isEmpty) return const Center(child: Text("No playlists yet."));
+          
+          return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
+            itemCount: playlists.length,
+            itemBuilder: (context, index) {
+              final p = playlists[index];
+              return ListTile(
+                leading: const Icon(Icons.queue_music),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(p['name'] ?? 'Playlist', maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text('Navidrome', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onTertiaryContainer, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+                subtitle: Text('${p['songCount'] ?? 0} tracks'),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => _PlaylistSongsTab(playlistId: p['id'], playlistName: p['name'] ?? 'Playlist'),
+                  ));
+                },
+                trailing: IconButton(
+                  icon: const Icon(Icons.add_circle_outline, size: 28),
+                  tooltip: 'Add entire playlist',
+                  onPressed: () async {
+                    final songs = await api.getPlaylistSongs(p['id']);
+                    ref.read(queueProvider.notifier).addListToQueue(songs);
+                  },
+                ),
+                onLongPress: () {
+                  showDialog(context: context, builder: (context) => AlertDialog(
+                    title: const Text('Delete Playlist?'),
+                    content: Text('Are you sure you want to delete "${p['name']}"?'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                      TextButton(onPressed: () async {
+                        await api.deletePlaylist(p['id']);
+                        ref.invalidate(navidromePlaylistsProvider);
+                        if (context.mounted) Navigator.pop(context);
+                      }, child: const Text('Delete', style: TextStyle(color: Colors.red))),
+                    ],
+                  ));
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PlaylistSongsTab extends ConsumerStatefulWidget {
+  final String playlistId;
+  final String playlistName;
+
+  const _PlaylistSongsTab({required this.playlistId, required this.playlistName});
+  
+  @override
+  _PlaylistSongsTabState createState() => _PlaylistSongsTabState();
+}
+
+class _PlaylistSongsTabState extends ConsumerState<_PlaylistSongsTab> {
+  late Future<List<Song>> _songsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSongs();
+  }
+  
+  void _loadSongs() {
+    _songsFuture = ref.read(navidromeClientProvider).getPlaylistSongs(widget.playlistId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: Text(widget.playlistName),
+        backgroundColor: Colors.transparent,
+        leading: BackButton(onPressed: () => Navigator.of(context).pop()),
+      ),
+      body: FutureBuilder<List<Song>>(
+        future: _songsFuture,
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          final songs = snapshot.data!;
+          return ListView.builder(
+            itemCount: songs.length,
+            itemBuilder: (context, index) => SongTile(
+              song: songs[index],
+              playlistId: widget.playlistId,
+              playlistSongIndex: index,
+              onPlaylistRemoved: () {
+                setState(() { _loadSongs(); });
+                ref.invalidate(navidromePlaylistsProvider); // update count
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -775,7 +894,18 @@ class _SongsTab extends ConsumerWidget {
 class SongTile extends ConsumerWidget {
   final Song song;
   final bool showActions;
-  const SongTile({Key? key, required this.song, this.showActions = true}) : super(key: key);
+  final String? playlistId;
+  final int? playlistSongIndex;
+  final VoidCallback? onPlaylistRemoved;
+
+  const SongTile({
+    Key? key, 
+    required this.song, 
+    this.showActions = true,
+    this.playlistId,
+    this.playlistSongIndex,
+    this.onPlaylistRemoved,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -785,6 +915,44 @@ class SongTile extends ConsumerWidget {
       child: InkWell(
         onTap: () {
           ref.read(queueProvider.notifier).playInstantly(song);
+        },
+        onLongPress: () async {
+          final playlists = await api.getPlaylists();
+          if (!context.mounted) return;
+          if (playlists.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No Navidrome playlists found! Create one first.')));
+            return;
+          }
+          showDialog(context: context, builder: (context) {
+            return AlertDialog(
+              title: const Text('Add to Playlist'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: playlists.length,
+                  itemBuilder: (context, index) {
+                    final p = playlists[index];
+                    return ListTile(
+                      leading: const Icon(Icons.playlist_add),
+                      title: Text(p['name'] ?? 'Playlist'),
+                      onTap: () async {
+                        await api.updatePlaylist(p['id'], songIdsToAdd: [song.id]);
+                        ref.invalidate(navidromePlaylistsProvider);
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added to ${p['name']}')));
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              ],
+            );
+          });
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
@@ -840,6 +1008,20 @@ class SongTile extends ConsumerWidget {
                     },
                     tooltip: "Add to Queue",
                   ),
+                  if (playlistId != null && playlistSongIndex != null) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 28, color: Colors.red),
+                      onPressed: () async {
+                        await api.updatePlaylist(playlistId!, songIndexesToRemove: [playlistSongIndex!]);
+                        onPlaylistRemoved?.call();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Removed from Playlist')));
+                        }
+                      },
+                      tooltip: "Remove from Playlist",
+                    ),
+                  ],
                 ],
               ],
             ),

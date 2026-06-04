@@ -24,12 +24,14 @@ class LyricsData {
   bool get hasSynced => syncedLyrics != null && syncedLyrics!.isNotEmpty;
 }
 
-final lyricsProvider = FutureProvider.family<LyricsData?, Song>((ref, song) async {
+typedef LyricsParams = ({String id, String title, String? artist});
+
+final lyricsProvider = FutureProvider.family<LyricsData?, LyricsParams>((ref, params) async {
   final api = ref.read(navidromeClientProvider);
   
   // 1. Try fetching from LRCLIB for synced lyrics using Search for fuzzy matching
   try {
-    final searchQ = '${song.artist ?? ''} ${song.title}'.trim();
+    final searchQ = '${params.artist ?? ''} ${params.title}'.trim();
     final url = Uri.parse('https://lrclib.net/api/search?q=${Uri.encodeComponent(searchQ)}');
     final response = await http.get(url);
     if (response.statusCode == 200) {
@@ -62,19 +64,19 @@ final lyricsProvider = FutureProvider.family<LyricsData?, Song>((ref, song) asyn
 
   // 2. Fallback to Navidrome API (usually unsynced)
   try {
-    final naviLyrics = await api.getLyrics(song.artist, song.title);
+    final naviLyrics = await api.getLyrics(params.artist, params.title);
     if (naviLyrics != null && naviLyrics.isNotEmpty) {
       return LyricsData(plainLyrics: naviLyrics);
     }
   } catch (e) {
-    print('Navidrome lyrics fetch failed: \$e');
+    print('Navidrome lyrics fetch failed: $e');
   }
 
   return null;
 });
 
-final translatedLyricsProvider = FutureProvider.family<LyricsData?, Song>((ref, song) async {
-  final original = await ref.watch(lyricsProvider(song).future);
+final translatedLyricsProvider = FutureProvider.family<LyricsData?, LyricsParams>((ref, params) async {
+  final original = await ref.watch(lyricsProvider(params).future);
   final targetLang = ref.watch(translationLanguageProvider);
   
   final translatorService = ref.read(translationServiceProvider);

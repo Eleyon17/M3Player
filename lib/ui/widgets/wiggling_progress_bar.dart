@@ -159,17 +159,21 @@ class _WigglePainter extends CustomPainter {
     final path = Path();
     path.moveTo(0, centerY);
     
-    // Smooth transition from wiggle to straight line near the thumb
+    // Smooth transition from wiggle to straight line near the thumb and at the start
     for (double x = 0; x <= activeWidth; x++) {
-      // Fade out amplitude as it gets close to thumb
+      // Fade out amplitude as it gets close to thumb and at the start
       final distanceToThumb = activeWidth - x;
-      final localAmp = distanceToThumb < 20 ? amplitude * (distanceToThumb / 20) : amplitude;
+      final distanceToStart = x;
+      
+      double localAmp = amplitude;
+      if (distanceToThumb < 20) localAmp *= (distanceToThumb / 20);
+      if (distanceToStart < 20) localAmp *= (distanceToStart / 20);
       
       final y = centerY + math.sin((x / 15) - (animationValue * math.pi * 2)) * localAmp;
       path.lineTo(x, y);
     }
     
-    if (activeWidth > 0) {
+    if (activeWidth > 2.0) {
       canvas.drawPath(path, activePaint);
     }
 
