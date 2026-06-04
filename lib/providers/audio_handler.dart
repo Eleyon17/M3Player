@@ -7,7 +7,7 @@ import '../api/navidrome_client.dart';
 class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   final AudioPlayer player;
   final NavidromeClient api;
-  final ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
+  ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
   
   static const String customActionFavorite = 'action_favorite';
   static const String customActionShuffle = 'action_shuffle';
@@ -202,8 +202,8 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     try {
       final song = await api.getSong(mediaId);
       if (song != null) {
-        await replaceQueue([song]);
         play();
+        replaceQueue([song]);
       }
     } catch (_) {}
   }
@@ -212,8 +212,8 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   Future<void> playFromSearch(String query, [Map<String, dynamic>? extras]) async {
     final results = await search(query);
     if (results.isNotEmpty) {
-      await replaceQueue([Song.fromJson(results.first.extras!)]);
       play();
+      replaceQueue([Song.fromJson(results.first.extras!)]);
     }
   }
 
@@ -230,10 +230,14 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     );
   }
 
-  Future<void> replaceQueue(List<Song> songs) async {
+  Future<void> replaceQueue(List<Song> songs, {int initialIndex = 0}) async {
     final sources = songs.map((s) => AudioSource.uri(Uri.parse(api.getStreamUrl(s.id)), tag: _songToMediaItem(s))).toList();
-    await _playlist.clear();
-    await _playlist.addAll(sources);
+    if (sources.length == 1) {
+      await player.setAudioSource(sources.first);
+    } else {
+      _playlist = ConcatenatingAudioSource(children: sources);
+      await player.setAudioSource(_playlist, initialIndex: initialIndex);
+    }
   }
   
   Future<void> addSongsToQueue(List<Song> songs) async {

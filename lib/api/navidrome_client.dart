@@ -263,6 +263,9 @@ class NavidromeClient {
   Future<List<Song>> getTopSongsFromFavoriteArtists() async {
     try {
       final starredSongs = await getStarred();
+      final int seedVal = (DateTime.now().millisecondsSinceEpoch ~/ (3 * 60 * 60 * 1000)) + starredSongs.length;
+      final random = Random(seedVal);
+
       final Set<String> artistNames = starredSongs.map((s) => s.artist ?? '').where((s) => s.isNotEmpty).toSet();
       
       List<String> artists = artistNames.toList();
@@ -271,7 +274,7 @@ class NavidromeClient {
          final randSongs = await getRandomSongs(size: 20);
          artists = randSongs.map((s) => s.artist ?? '').where((s) => s.isNotEmpty).toSet().toList();
       }
-      artists.shuffle();
+      artists.shuffle(random);
       artists = artists.take(5).toList();
       
       List<Song> songs = [];
@@ -279,7 +282,7 @@ class NavidromeClient {
         final top = await getTopSongs(artist, count: 5);
         songs.addAll(top);
       }
-      songs.shuffle();
+      songs.shuffle(random);
       return songs;
     } catch (e) {
       return [];

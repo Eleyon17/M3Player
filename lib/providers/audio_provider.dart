@@ -117,9 +117,10 @@ class QueueNotifier extends Notifier<QueueState> {
         itemsToPlay.add(song);
       }
 
-      await audioHandler.replaceQueue(itemsToPlay);
-      await audioHandler.skipToQueueItem(initialIndex);
       audioHandler.play();
+      audioHandler.replaceQueue(itemsToPlay, initialIndex: initialIndex).catchError((e) {
+        print("Error in replaceQueue: $e");
+      });
       _api.scrobble(song.id, submission: false); // Report now playing
     } catch (e) {
       print("Error playing song: $e");

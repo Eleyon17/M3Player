@@ -39,6 +39,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
   Timer? _debounce;
   bool _hasUpdate = false;
   final String CURRENT_APP_VERSION = 'v3.3.6';
+  String? _latestVersionTag;
 
   @override
   void initState() {
@@ -51,18 +52,37 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
       final res = await http.get(Uri.parse('https://api.github.com/repos/Eleyon17/M3Player/releases/latest'));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        if (data['tag_name'] != null && data['tag_name'] != CURRENT_APP_VERSION) {
-          if (mounted) setState(() => _hasUpdate = true);
+        final latestVersion = data['tag_name'];
+        if (latestVersion != null) {
+          final prefs = await SharedPreferences.getInstance();
+          final lastReadVersion = prefs.getString('last_read_version');
+          if (latestVersion != CURRENT_APP_VERSION || lastReadVersion != latestVersion) {
+            if (mounted) {
+              setState(() {
+                _hasUpdate = true;
+                _latestVersionTag = latestVersion;
+              });
+            }
+          }
         }
       }
     } catch (_) {}
   }
 
   Future<void> _fetchChangelog() async {
+    if (_latestVersionTag != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_read_version', _latestVersionTag!);
+      setState(() => _hasUpdate = false);
+    }
+    
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+      barrierColor: Colors.black54,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
     );
     try {
       final res = await http.get(Uri.parse('https://api.github.com/repos/Eleyon17/M3Player/releases/latest'));
@@ -74,17 +94,23 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
         if (mounted) {
           setState(() => _hasUpdate = false);
         }
-
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Changelog'),
-            content: SingleChildScrollView(child: Text(body)),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
-            ],
-          ),
-        );
+        
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierColor: Colors.black54,
+            builder: (context) => BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: AlertDialog(
+                title: const Text('Changelog'),
+                content: SingleChildScrollView(child: Text(body)),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))
+                ],
+              ),
+            ),
+          );
+        }
       } else {
         throw Exception();
       }
@@ -97,23 +123,27 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
   void _promptLogout() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Log Out'),
-        content: const Text('Are you sure you want to log out of M3Player?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
-              if (mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
-              }
-            },
-            child: const Text('Log Out'),
-          ),
-        ],
+      barrierColor: Colors.black54,
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: AlertDialog(
+          title: const Text('Log Out'),
+          content: const Text('Are you sure you want to log out of M3Player?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+                if (mounted) {
+                  Navigator.of(context).pushReplacementNamed('/login');
+                }
+              },
+              child: const Text('Log Out'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -128,6 +158,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
   void _showTranslationsDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
+      barrierColor: Colors.black54,
       builder: (ctx) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: AlertDialog(
@@ -274,13 +305,21 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                     value: 'translations',
                     child: Row(children: [Icon(Icons.translate), SizedBox(width: 12), Text('Translations')]),
                   ),
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'theme',
-                    child: Row(children: [Icon(Icons.palette), SizedBox(width: 12), Text('Theme')]),
+                    child: Row(children: [
+                      Icon(ref.watch(themeProvider.notifier).isDarkMode ? Icons.light_mode : Icons.dark_mode), 
+                      const SizedBox(width: 12), 
+                      const Text('Theme')
+                    ]),
                   ),
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'changelog',
-                    child: Row(children: [Icon(Icons.history), SizedBox(width: 12), Text('Changelog')]),
+                    child: Row(children: [
+                      Badge(isLabelVisible: _hasUpdate, child: const Icon(Icons.history)), 
+                      const SizedBox(width: 12), 
+                      const Text('Changelog')
+                    ]),
                   ),
                   const PopupMenuItem<String>(
                     value: 'logout',
@@ -309,13 +348,6 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                   indicator: BoxDecoration(
                     color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(30),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
@@ -437,11 +469,24 @@ class _SearchResultsTab extends ConsumerWidget {
 }
 
 
-class _HomeTab extends ConsumerWidget {
+class _HomeTab extends ConsumerStatefulWidget {
   const _HomeTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends ConsumerState<_HomeTab> {
+  late Future<List<Song>> _rediscoverFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _rediscoverFuture = ref.read(navidromeClientProvider).getRediscoverSongs(count: 30);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final searchQuery = ref.watch(discoverSearchQueryProvider);
     if (searchQuery.isNotEmpty) {
       return _SearchResultsTab(query: searchQuery);
@@ -472,7 +517,7 @@ class _HomeTab extends ConsumerWidget {
                   itemCount: songs.length,
                   itemBuilder: (context, index) => SizedBox(
                     width: 320,
-                    child: SongTile(song: songs[index]),
+                    child: SongTile(song: songs[index], showActions: false),
                   ),
                 );
               },
@@ -520,7 +565,7 @@ class _HomeTab extends ConsumerWidget {
           ),
         ),
         FutureBuilder<List<Song>>(
-          future: api.getRediscoverSongs(count: 30),
+          future: _rediscoverFuture,
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
@@ -654,7 +699,8 @@ class _SongsTab extends ConsumerWidget {
 
 class SongTile extends ConsumerWidget {
   final Song song;
-  const SongTile({Key? key, required this.song}) : super(key: key);
+  final bool showActions;
+  const SongTile({Key? key, required this.song, this.showActions = true}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -703,21 +749,23 @@ class SongTile extends ConsumerWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.playlist_play, size: 28),
-                  onPressed: () {
-                    ref.read(queueProvider.notifier).insertNext(song);
-                  },
-                  tooltip: "Play Next",
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.add, size: 28),
-                  onPressed: () {
-                    ref.read(queueProvider.notifier).addListToQueue([song]);
-                  },
-                  tooltip: "Add to Queue",
-                ),
+                if (showActions) ...[
+                  IconButton(
+                    icon: const Icon(Icons.playlist_play, size: 28),
+                    onPressed: () {
+                      ref.read(queueProvider.notifier).insertNext(song);
+                    },
+                    tooltip: "Play Next",
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 28),
+                    onPressed: () {
+                      ref.read(queueProvider.notifier).addListToQueue([song]);
+                    },
+                    tooltip: "Add to Queue",
+                  ),
+                ],
               ],
             ),
           ],

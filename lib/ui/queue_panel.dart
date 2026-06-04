@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:math' as Math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,31 +10,46 @@ import '../models/song.dart';
 import 'home_screen.dart'; // To access showHistoryProvider
 import 'widgets/bubbly_widgets.dart';
 
-class AnimatedBars extends StatefulWidget {
+class AnimatedBars extends ConsumerStatefulWidget {
   final Color color;
   const AnimatedBars({Key? key, required this.color}) : super(key: key);
 
   @override
-  _AnimatedBarsState createState() => _AnimatedBarsState();
+  ConsumerState<AnimatedBars> createState() => _AnimatedBarsState();
 }
 
-class _AnimatedBarsState extends State<AnimatedBars> with SingleTickerProviderStateMixin {
+class _AnimatedBarsState extends ConsumerState<AnimatedBars> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  StreamSubscription<bool>? _sub;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600))..repeat(reverse: true);
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    final player = ref.read(audioPlayerProvider);
+    if (player.playing) {
+      _controller.repeat(reverse: true);
+    }
+    _sub = player.playingStream.listen((playing) {
+      if (playing) {
+        if (!_controller.isAnimating) _controller.repeat(reverse: true);
+      } else {
+        _controller.stop();
+      }
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    _sub?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final playing = ref.read(audioPlayerProvider).playing;
     return SizedBox(
       width: 24,
       height: 24,
@@ -44,8 +60,10 @@ class _AnimatedBarsState extends State<AnimatedBars> with SingleTickerProviderSt
           return AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
-              final val = (Math.sin(_controller.value * Math.pi * 2 + index * 1.5) + 1) / 2;
-              return Container(
+              final val = playing ? (Math.sin(_controller.value * Math.pi * 2 + index * 1.5) + 1) / 2 : 0.0;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
                 width: 4,
                 height: 8 + (12 * val),
                 decoration: BoxDecoration(
