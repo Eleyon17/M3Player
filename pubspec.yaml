@@ -23,6 +23,7 @@ dependencies:
   palette_generator: ^0.3.3+7
   scrollable_positioned_list: ^0.3.8
   shared_preferences: ^2.5.5
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

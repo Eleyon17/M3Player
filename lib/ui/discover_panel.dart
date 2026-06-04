@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui';
 import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/translation_provider.dart';
@@ -38,7 +39,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   bool _hasUpdate = false;
-  final String CURRENT_APP_VERSION = 'v3.3.6';
+  final String CURRENT_APP_VERSION = 'v0.0.2';
   String? _latestVersionTag;
 
   @override
@@ -85,15 +86,11 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
       ),
     );
     try {
-      final res = await http.get(Uri.parse('https://api.github.com/repos/Eleyon17/M3Player/releases/latest'));
+      final res = await http.get(Uri.parse('https://api.github.com/repos/Eleyon17/M3Player/releases/tags/$CURRENT_APP_VERSION'));
       Navigator.pop(context); // pop loading
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final body = data['body'] ?? 'No changelog available.';
-        
-        if (mounted) {
-          setState(() => _hasUpdate = false);
-        }
         
         if (mounted) {
           showDialog(
@@ -102,9 +99,17 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
             builder: (context) => BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: AlertDialog(
-                title: const Text('Changelog'),
+                title: Text('Changelog ($CURRENT_APP_VERSION)'),
                 content: SingleChildScrollView(child: Text(body)),
                 actions: [
+                  if (_latestVersionTag != null && _latestVersionTag != CURRENT_APP_VERSION)
+                    FilledButton.icon(
+                      icon: const Icon(Icons.download),
+                      label: Text('Update to $_latestVersionTag'),
+                      onPressed: () {
+                        launchUrl(Uri.parse('https://github.com/Eleyon17/M3Player/releases/latest'), mode: LaunchMode.externalApplication);
+                      },
+                    ),
                   TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))
                 ],
               ),
@@ -478,11 +483,14 @@ class _HomeTab extends ConsumerStatefulWidget {
 
 class _HomeTabState extends ConsumerState<_HomeTab> {
   late Future<List<Song>> _rediscoverFuture;
+  late Future<List<Song>> _favoriteArtistsFuture;
 
   @override
   void initState() {
     super.initState();
-    _rediscoverFuture = ref.read(navidromeClientProvider).getRediscoverSongs(count: 30);
+    final api = ref.read(navidromeClientProvider);
+    _rediscoverFuture = api.getRediscoverSongs(count: 30);
+    _favoriteArtistsFuture = api.getTopSongsFromFavoriteArtists();
   }
 
   @override
@@ -506,7 +514,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
           child: SizedBox(
             height: 120, // Compact Song Tiles
             child: FutureBuilder<List<Song>>(
-              future: api.getTopSongsFromFavoriteArtists(),
+              future: _favoriteArtistsFuture,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
                 final songs = snapshot.data!;
@@ -516,8 +524,11 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: songs.length,
                   itemBuilder: (context, index) => SizedBox(
-                    width: 320,
-                    child: SongTile(song: songs[index], showActions: false),
+                    width: 260,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: SongTile(song: songs[index], showActions: false),
+                    ),
                   ),
                 );
               },
