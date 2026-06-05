@@ -47,17 +47,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    if (isMobile || screenWidth < 800) {
+    if (isMobile) {
       return const MobileView();
     }
 
     final showLyrics = ref.watch(showLyricsProvider);
-
     final currentSong = ref.watch(queueProvider.select((state) => state.currentSong));
     final api = ref.read(navidromeClientProvider);
 
-    return Scaffold(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 1000) {
+          return const MobileView();
+        }
+        return Scaffold(
       body: Stack(
         children: [
           // Solid base color
@@ -279,6 +282,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
         ],
       ),
+    );
+      },
     );
   }
 
