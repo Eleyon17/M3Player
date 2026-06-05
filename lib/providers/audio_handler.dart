@@ -11,6 +11,7 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   
   static const String customActionFavorite = 'action_favorite';
   static const String customActionShuffle = 'action_shuffle';
+  static const String customActionLoop = 'action_loop';
 
   MyAudioHandler(this.player, this.api) {
     player.setAudioSource(_playlist);
@@ -37,6 +38,12 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             label: 'Shuffle',
             action: MediaAction.custom,
             customAction: CustomMediaAction(name: customActionShuffle),
+          ),
+          const MediaControl(
+            androidIcon: 'drawable/ic_stat_loop',
+            label: 'Loop',
+            action: MediaAction.custom,
+            customAction: CustomMediaAction(name: customActionLoop),
           )
         ],
         systemActions: const {
@@ -57,8 +64,21 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         bufferedPosition: player.bufferedPosition,
         speed: player.speed,
         queueIndex: event.currentIndex,
+        repeatMode: _getRepeatMode(player.loopMode),
+        shuffleMode: player.shuffleModeEnabled ? AudioServiceShuffleMode.all : AudioServiceShuffleMode.none,
       ));
     });
+  }
+
+  AudioServiceRepeatMode _getRepeatMode(LoopMode loopMode) {
+    switch (loopMode) {
+      case LoopMode.off:
+        return AudioServiceRepeatMode.none;
+      case LoopMode.one:
+        return AudioServiceRepeatMode.one;
+      case LoopMode.all:
+        return AudioServiceRepeatMode.all;
+    }
   }
 
   void _listenToSequenceState() {
@@ -106,6 +126,32 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   @override
+  Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    switch (repeatMode) {
+      case AudioServiceRepeatMode.none:
+        await player.setLoopMode(LoopMode.off);
+        break;
+      case AudioServiceRepeatMode.one:
+        await player.setLoopMode(LoopMode.one);
+        break;
+      case AudioServiceRepeatMode.group:
+      case AudioServiceRepeatMode.all:
+        await player.setLoopMode(LoopMode.all);
+        break;
+    }
+  }
+
+  @override
+  Future<void> setShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    if (shuffleMode == AudioServiceShuffleMode.none) {
+      await player.setShuffleModeEnabled(false);
+    } else {
+      await player.setShuffleModeEnabled(true);
+      await player.shuffle();
+    }
+  }
+
+  @override
   Future<void> customAction(String name, [Map<String, dynamic>? extras]) async {
     if (name == customActionFavorite) {
       final current = mediaItem.value;
@@ -126,6 +172,15 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       await player.setShuffleModeEnabled(!player.shuffleModeEnabled);
       if (player.shuffleModeEnabled) {
         await player.shuffle();
+      }
+    } else if (name == customActionLoop) {
+      final current = player.loopMode;
+      if (current == LoopMode.off) {
+        await player.setLoopMode(LoopMode.all);
+      } else if (current == LoopMode.all) {
+        await player.setLoopMode(LoopMode.one);
+      } else {
+        await player.setLoopMode(LoopMode.off);
       }
     }
   }

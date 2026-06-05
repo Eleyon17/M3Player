@@ -331,14 +331,14 @@ class QueuePanel extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
         child: Material(
           elevation: 4,
-          shadowColor: Colors.black.withValues(alpha: 0.4),
-          color: Theme.of(context).colorScheme.surface,
+          shadowColor: Colors.black.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
           clipBehavior: Clip.antiAlias,
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3), width: 1),
+              border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6), width: 2),
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),

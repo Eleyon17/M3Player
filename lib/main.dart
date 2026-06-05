@@ -48,18 +48,6 @@ void main() async {
     JustAudioMediaKit.ensureInitialized();
   }
 
-  // Delay the AudioService initialization to happen after Riverpod provides NavidromeClient?
-  // Actually, we can initialize it directly with a dummy client, and then update it later, 
-  // or just pass a default one.
-  audioHandler = await AudioService.init(
-    builder: () => MyAudioHandler(AudioPlayer(), NavidromeClient()),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
-      androidNotificationChannelName: 'Audio playback',
-      androidNotificationOngoing: true,
-    ),
-  );
-
   final prefs = await SharedPreferences.getInstance();
   final savedUrl = prefs.getString('nd_url');
   final savedUser = prefs.getString('nd_user');
@@ -78,6 +66,9 @@ void main() async {
       androidNotificationOngoing: true,
     ),
   );
+
+
+
 
   runApp(ProviderScope(
     overrides: [

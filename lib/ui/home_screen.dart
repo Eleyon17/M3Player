@@ -57,7 +57,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 1000) {
+        if (constraints.maxWidth < 700) {
           return const MobileView();
         }
         return Scaffold(
