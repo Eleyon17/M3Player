@@ -47,7 +47,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (isMobile) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (isMobile || screenWidth < 800) {
       return const MobileView();
     }
 

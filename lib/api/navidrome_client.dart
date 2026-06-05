@@ -1,5 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/song.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import '../models/song.dart';
@@ -262,7 +266,21 @@ class NavidromeClient {
 
   Future<List<Song>> getTopSongsFromFavoriteArtists() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastFetch = prefs.getInt('last_favorite_artists_fetch') ?? 0;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      
+      if (now - lastFetch < 3 * 60 * 60 * 1000) {
+        final cached = prefs.getString('cached_favorite_artists_songs');
+        if (cached != null) {
+          final List<dynamic> decoded = jsonDecode(cached);
+          return decoded.map((e) => Song.fromJson(e as Map<String, dynamic>)).toList();
+        }
+      }
+
       final starredSongs = await getStarred();
+      final starredIds = starredSongs.map((s) => s.id).toSet();
+      
       final int seedVal = (DateTime.now().millisecondsSinceEpoch ~/ (3 * 60 * 60 * 1000)) + starredSongs.length;
       final random = Random(seedVal);
 
@@ -279,10 +297,16 @@ class NavidromeClient {
       
       List<Song> songs = [];
       for (final artist in artists) {
-        final top = await getTopSongs(artist, count: 5);
-        songs.addAll(top);
+        final top = await getTopSongs(artist, count: 10);
+        // Never suggest a song you've already favorited
+        songs.addAll(top.where((s) => !starredIds.contains(s.id)));
       }
       songs.shuffle(random);
+      
+      // Save to cache
+      await prefs.setInt('last_favorite_artists_fetch', now);
+      await prefs.setString('cached_favorite_artists_songs', jsonEncode(songs.map((s) => s.toJson()).toList()));
+      
       return songs;
     } catch (e) {
       return [];
