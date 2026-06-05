@@ -68,25 +68,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 end: Alignment.bottomRight,
                 colors: Theme.of(context).brightness == Brightness.dark
                   ? [
-                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                      Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                       Theme.of(context).colorScheme.surface,
-                      Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
                     ]
                   : [
-                      Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
-                      Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.4),
-                      Theme.of(context).colorScheme.tertiaryContainer.withValues(alpha: 0.6),
+                      Theme.of(context).colorScheme.surfaceContainerLow,
+                      Theme.of(context).colorScheme.surface,
                     ],
               ),
             ),
           ),
           
-          // Vibrant blurred overlay to make the UI deeply dynamic
+          // Subtle blurred overlay to retain texture
           if (currentSong != null)
             Opacity(
-              opacity: Theme.of(context).brightness == Brightness.dark ? 0.65 : 0.45,
+              opacity: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.08,
               child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 120, sigmaY: 120),
+                imageFilter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 800),
                   child: CachedNetworkImage(
@@ -304,7 +302,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       key: const ValueKey('discover'),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+            : Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -327,7 +327,9 @@ class _BoxedQueue extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).brightness == Brightness.dark 
+            ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
+            : Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

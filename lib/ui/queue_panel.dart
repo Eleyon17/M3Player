@@ -168,7 +168,7 @@ class QueuePanel extends ConsumerWidget {
     final api = ref.read(navidromeClientProvider);
 
     return Container(
-      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+      color: Colors.transparent,
       child: Column(
         children: [
           Padding(
