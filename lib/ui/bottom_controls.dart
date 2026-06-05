@@ -51,108 +51,104 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
           child: Row(
             children: [
               // Playback Controls (Left)
-              Expanded(
-                flex: 1,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    BubblyIconButton(
-                      icon: Icons.shuffle,
-                      noShadow: true,
-                      iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                      onPressed: () {
-                        ref.read(queueProvider.notifier).toggleShuffle();
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    BubblyIconButton(
-                      icon: Icons.skip_previous,
-                      noShadow: true,
-                      iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                      onPressed: () {
-                        ref.read(queueProvider.notifier).previous();
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    StreamBuilder<PlayerState>(
-                      stream: player.playerStateStream,
-                      builder: (context, snapshot) {
-                        final playerState = snapshot.data;
-                        final processingState = playerState?.processingState;
-                        final playing = playerState?.playing;
-                        if (processingState == ProcessingState.loading ||
-                            processingState == ProcessingState.buffering) {
-                          return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                            width: 48.0,
-                            height: 48.0,
-                            child: const CircularProgressIndicator(),
-                          );
-                        } else if (playing != true) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: BubblyIconButton(
-                              icon: Icons.play_arrow_rounded,
-                              size: 48.0,
-                              noShadow: false,
-                              color: Theme.of(context).colorScheme.primary,
-                              iconColor: Theme.of(context).colorScheme.onPrimary,
-                              onPressed: player.play,
-                            ),
-                          );
-                        } else if (processingState != ProcessingState.completed) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: BubblyIconButton(
-                              icon: Icons.pause_rounded,
-                              size: 48.0,
-                              noShadow: false,
-                              color: Theme.of(context).colorScheme.primary,
-                              iconColor: Theme.of(context).colorScheme.onPrimary,
-                              onPressed: player.pause,
-                            ),
-                          );
-                        } else {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: BubblyIconButton(
-                              icon: Icons.play_arrow_rounded,
-                              size: 48.0,
-                              noShadow: false,
-                              color: Theme.of(context).colorScheme.primary,
-                              iconColor: Theme.of(context).colorScheme.onPrimary,
-                              onPressed: () => player.seek(Duration.zero),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    BubblyIconButton(
-                      icon: Icons.skip_next,
-                      noShadow: true,
-                      iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                      onPressed: () {
-                        ref.read(queueProvider.notifier).next();
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    BubblyIconButton(
-                      icon: ref.watch(queueProvider).loopMode == AppLoopMode.one ? Icons.repeat_one : Icons.repeat,
-                      noShadow: true,
-                      color: ref.watch(queueProvider).loopMode != AppLoopMode.off ? Theme.of(context).colorScheme.primaryContainer : null,
-                      iconColor: ref.watch(queueProvider).loopMode != AppLoopMode.off ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurfaceVariant,
-                      onPressed: () {
-                        ref.read(queueProvider.notifier).toggleLoop();
-                      },
-                    ),
-                  ],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  BubblyIconButton(
+                    icon: Icons.shuffle,
+                    noShadow: true,
+                    iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    onPressed: () {
+                      ref.read(queueProvider.notifier).toggleShuffle();
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  BubblyIconButton(
+                    icon: Icons.skip_previous,
+                    noShadow: true,
+                    iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    onPressed: () {
+                      ref.read(queueProvider.notifier).previous();
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  StreamBuilder<PlayerState>(
+                    stream: player.playerStateStream,
+                    builder: (context, snapshot) {
+                      final playerState = snapshot.data;
+                      final processingState = playerState?.processingState;
+                      final playing = playerState?.playing;
+                      if (processingState == ProcessingState.loading ||
+                          processingState == ProcessingState.buffering) {
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                          width: 48.0,
+                          height: 48.0,
+                          child: const CircularProgressIndicator(),
+                        );
+                      } else if (playing != true) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: BubblyIconButton(
+                            icon: Icons.play_arrow_rounded,
+                            size: 48.0,
+                            noShadow: false,
+                            color: Theme.of(context).colorScheme.primary,
+                            iconColor: Theme.of(context).colorScheme.onPrimary,
+                            onPressed: player.play,
+                          ),
+                        );
+                      } else if (processingState != ProcessingState.completed) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: BubblyIconButton(
+                            icon: Icons.pause_rounded,
+                            size: 48.0,
+                            noShadow: false,
+                            color: Theme.of(context).colorScheme.primary,
+                            iconColor: Theme.of(context).colorScheme.onPrimary,
+                            onPressed: player.pause,
+                          ),
+                        );
+                      } else {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: BubblyIconButton(
+                            icon: Icons.play_arrow_rounded,
+                            size: 48.0,
+                            noShadow: false,
+                            color: Theme.of(context).colorScheme.primary,
+                            iconColor: Theme.of(context).colorScheme.onPrimary,
+                            onPressed: () => player.seek(Duration.zero),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  BubblyIconButton(
+                    icon: Icons.skip_next,
+                    noShadow: true,
+                    iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    onPressed: () {
+                      ref.read(queueProvider.notifier).next();
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  BubblyIconButton(
+                    icon: ref.watch(queueProvider).loopMode == AppLoopMode.one ? Icons.repeat_one : Icons.repeat,
+                    noShadow: true,
+                    color: ref.watch(queueProvider).loopMode != AppLoopMode.off ? Theme.of(context).colorScheme.primaryContainer : null,
+                    iconColor: ref.watch(queueProvider).loopMode != AppLoopMode.off ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurfaceVariant,
+                    onPressed: () {
+                      ref.read(queueProvider.notifier).toggleLoop();
+                    },
+                  ),
+                ],
               ),
               
               // Progress Bar (Center)
               Expanded(
-                flex: 2,
                 child: StreamBuilder<Duration?>(
                   stream: player.positionStream,
                   builder: (context, snapshot) {
@@ -161,7 +157,10 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                     
                     return Row(
                       children: [
-                        Text(_formatDuration(position), style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 24.0),
+                          child: Text(_formatDuration(position), style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                        ),
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -189,7 +188,10 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                             ),
                           ),
                         ),
-                        Text(_formatDuration(duration), style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 24.0),
+                          child: Text(_formatDuration(duration), style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+                        ),
                       ],
                     );
                   },
@@ -197,9 +199,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
               ),
               
               // Volume Control (Right)
-              Expanded(
-                flex: 1,
-                child: Row(
+              Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     StreamBuilder<double>(
@@ -236,7 +236,6 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                     ),
                   ],
                 ),
-              ),
             ],
         ),
       ),

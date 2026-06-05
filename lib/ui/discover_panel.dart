@@ -284,7 +284,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                             ),
                           const SizedBox(width: 4),
                           ActionChip(
-                            label: Text(ref.watch(searchFilterProvider), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            label: Text(ref.watch(searchFilterProvider), style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onPrimaryContainer)),
                             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                             side: BorderSide.none,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
