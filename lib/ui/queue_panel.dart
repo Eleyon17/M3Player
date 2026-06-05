@@ -88,7 +88,9 @@ class HistoryPanel extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.6),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Color.alphaBlend(Colors.white.withValues(alpha: 0.15), Theme.of(context).colorScheme.surface).withValues(alpha: 0.95)
+            : Color.alphaBlend(Colors.white.withValues(alpha: 0.6), Theme.of(context).colorScheme.surface).withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

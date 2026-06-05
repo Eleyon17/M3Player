@@ -80,18 +80,26 @@ final lyricsProvider = FutureProvider.family<LyricsData?, LyricsParams>((ref, pa
     print('LRCLIB search failed: $e');
   }
 
-  if (fallbackPlainLyrics != null && fallbackPlainLyrics!.isNotEmpty) {
-    return LyricsData(plainLyrics: fallbackPlainLyrics);
-  }
-
-  // 3. Fallback to Navidrome API (usually unsynced)
+  // 3. Check Navidrome API (it might have embedded synced LRC files!)
   try {
     final naviLyrics = await api.getLyrics(params.artist, params.title);
     if (naviLyrics != null && naviLyrics.isNotEmpty) {
-      return LyricsData(plainLyrics: naviLyrics);
+      if (RegExp(r'\[\d{2,}:\d{2}').hasMatch(naviLyrics)) {
+        final parsed = _parseLrc(naviLyrics);
+        if (parsed.isNotEmpty) {
+          return LyricsData(syncedLyrics: parsed);
+        }
+      }
+      // If we don't have lrclib plain lyrics, use Navidrome's plain lyrics
+      fallbackPlainLyrics ??= naviLyrics;
     }
   } catch (e) {
     print('Navidrome lyrics fetch failed: $e');
+  }
+
+  // 4. If no synced lyrics were found anywhere, return the plain text fallback
+  if (fallbackPlainLyrics != null && fallbackPlainLyrics!.isNotEmpty) {
+    return LyricsData(plainLyrics: fallbackPlainLyrics);
   }
 
   return null;

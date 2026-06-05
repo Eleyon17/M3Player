@@ -8,6 +8,9 @@ class WigglingProgressBar extends StatefulWidget {
   final bool isPlaying;
   final ValueChanged<double>? onChanged;
   final ValueChanged<double>? onChangeEnd;
+  final Color? activeColor;
+  final Color? inactiveColor;
+  final Color? thumbColor;
 
   const WigglingProgressBar({
     Key? key,
@@ -16,6 +19,9 @@ class WigglingProgressBar extends StatefulWidget {
     required this.isPlaying,
     this.onChanged,
     this.onChangeEnd,
+    this.activeColor,
+    this.inactiveColor,
+    this.thumbColor,
   }) : super(key: key);
 
   @override
@@ -113,9 +119,9 @@ class _WigglingProgressBarState extends State<WigglingProgressBar> with SingleTi
                     progress: widget.max > 0 ? (widget.value / widget.max).clamp(0.0, 1.0) : 0.0,
                     animationValue: _controller.value,
                     amplitude: _amplitude,
-                    activeColor: Theme.of(context).colorScheme.primary,
-                    inactiveColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
-                    thumbColor: Theme.of(context).colorScheme.primary,
+                    activeColor: widget.activeColor ?? Theme.of(context).colorScheme.primary,
+                    inactiveColor: widget.inactiveColor ?? Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+                    thumbColor: widget.thumbColor ?? Theme.of(context).colorScheme.primary,
                   ),
                 );
               },
@@ -153,7 +159,7 @@ class _WigglePainter extends CustomPainter {
     final activePaint = Paint()
       ..color = activeColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0
+      ..strokeWidth = 6.0
       ..strokeCap = StrokeCap.round;
 
     final path = Path();
@@ -182,14 +188,14 @@ class _WigglePainter extends CustomPainter {
       final inactivePaint = Paint()
         ..color = inactiveColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 4.0
+        ..strokeWidth = 6.0
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(Offset(activeWidth, centerY), Offset(size.width, centerY), inactivePaint);
     }
 
     // Draw thumb
     final thumbPaint = Paint()..color = thumbColor;
-    canvas.drawCircle(Offset(activeWidth, centerY), 6.0, thumbPaint);
+    canvas.drawCircle(Offset(activeWidth, centerY), 8.0, thumbPaint);
   }
 
   @override

@@ -759,6 +759,8 @@ class _PlaylistSongsTab extends ConsumerStatefulWidget {
 
 class _PlaylistSongsTabState extends ConsumerState<_PlaylistSongsTab> {
   late Future<List<Song>> _songsFuture;
+  bool _isEditMode = false;
+  final Set<int> _selectedIndexesToRemove = {};
 
   @override
   void initState() {
@@ -778,49 +780,61 @@ class _PlaylistSongsTabState extends ConsumerState<_PlaylistSongsTab> {
         title: Text(widget.playlistName),
         backgroundColor: Colors.transparent,
         leading: BackButton(onPressed: () => Navigator.of(context).pop()),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.playlist_add),
-            tooltip: 'Add entire playlist to queue',
-            onPressed: () async {
-              final songs = await _songsFuture;
-              if (songs.isNotEmpty) {
-                ref.read(queueProvider.notifier).addListToQueue(songs);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Playlist added to queue')));
-                }
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_sweep, color: Colors.red),
-            tooltip: 'Clear Playlist',
-            onPressed: () async {
-              showDialog(context: context, builder: (context) => AlertDialog(
-                title: const Text('Clear Playlist?'),
-                content: const Text('This will remove all songs from the playlist.'),
-                actions: [
-                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                  TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      final songs = await _songsFuture;
+        actions: _isEditMode
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.check, color: Colors.green),
+                  tooltip: 'Confirm Delete',
+                  onPressed: () async {
+                    if (_selectedIndexesToRemove.isNotEmpty) {
                       final api = ref.read(navidromeClientProvider);
-                      // Since Navidrome requires songIndexesToRemove, we just send all indices
-                      final indices = List.generate(songs.length, (i) => i);
-                      if (indices.isNotEmpty) {
-                        await api.updatePlaylist(widget.playlistId, songIndexesToRemove: indices);
-                        setState(() { _loadSongs(); });
-                        ref.invalidate(navidromePlaylistsProvider);
+                      // API accepts 0-based indices to remove
+                      await api.updatePlaylist(widget.playlistId, songIndexesToRemove: _selectedIndexesToRemove.toList());
+                      setState(() { 
+                        _isEditMode = false;
+                        _selectedIndexesToRemove.clear();
+                        _loadSongs(); 
+                      });
+                      ref.invalidate(navidromePlaylistsProvider);
+                    } else {
+                      setState(() { _isEditMode = false; });
+                    }
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  tooltip: 'Cancel',
+                  onPressed: () {
+                    setState(() {
+                      _isEditMode = false;
+                      _selectedIndexesToRemove.clear();
+                    });
+                  },
+                ),
+              ]
+            : [
+                IconButton(
+                  icon: const Icon(Icons.playlist_add),
+                  tooltip: 'Add entire playlist to queue',
+                  onPressed: () async {
+                    final songs = await _songsFuture;
+                    if (songs.isNotEmpty) {
+                      ref.read(queueProvider.notifier).addListToQueue(songs);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Playlist added to queue')));
                       }
-                    },
-                    child: const Text('Clear', style: TextStyle(color: Colors.red)),
-                  ),
-                ],
-              ));
-            },
-          ),
-        ],
+                    }
+                  },
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isEditMode = true;
+                    });
+                  },
+                  child: const Text('Remove', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                ),
+              ],
       ),
       body: FutureBuilder<List<Song>>(
         future: _songsFuture,
@@ -833,6 +847,17 @@ class _PlaylistSongsTabState extends ConsumerState<_PlaylistSongsTab> {
               song: songs[index],
               playlistId: widget.playlistId,
               playlistSongIndex: index,
+              isEditMode: _isEditMode,
+              isSelected: _selectedIndexesToRemove.contains(index),
+              onSelectionChanged: (selected) {
+                setState(() {
+                  if (selected == true) {
+                    _selectedIndexesToRemove.add(index);
+                  } else {
+                    _selectedIndexesToRemove.remove(index);
+                  }
+                });
+              },
               onPlaylistRemoved: () {
                 setState(() { _loadSongs(); });
                 ref.invalidate(navidromePlaylistsProvider); // update count
@@ -931,6 +956,9 @@ class SongTile extends ConsumerWidget {
   final String? playlistId;
   final int? playlistSongIndex;
   final VoidCallback? onPlaylistRemoved;
+  final bool isEditMode;
+  final bool isSelected;
+  final ValueChanged<bool?>? onSelectionChanged;
 
   const SongTile({
     Key? key, 
@@ -939,6 +967,9 @@ class SongTile extends ConsumerWidget {
     this.playlistId,
     this.playlistSongIndex,
     this.onPlaylistRemoved,
+    this.isEditMode = false,
+    this.isSelected = false,
+    this.onSelectionChanged,
   }) : super(key: key);
 
   @override
@@ -948,9 +979,14 @@ class SongTile extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       child: InkWell(
         onTap: () {
-          ref.read(queueProvider.notifier).playInstantly(song);
+          if (isEditMode) {
+            onSelectionChanged?.call(!isSelected);
+          } else {
+            ref.read(queueProvider.notifier).playInstantly(song);
+          }
         },
         onLongPress: () async {
+          if (isEditMode) return;
           final playlists = await api.getPlaylists();
           if (!context.mounted) return;
           if (playlists.isEmpty) {
@@ -1000,6 +1036,11 @@ class SongTile extends ConsumerWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
+            if (isEditMode)
+              Checkbox(
+                value: isSelected,
+                onChanged: onSelectionChanged,
+              ),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
@@ -1033,7 +1074,7 @@ class SongTile extends ConsumerWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (showActions) ...[
+                if (showActions && !isEditMode) ...[
                   IconButton(
                     icon: const Icon(Icons.playlist_play, size: 28),
                     onPressed: () {

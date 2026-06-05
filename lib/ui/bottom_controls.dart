@@ -27,6 +27,11 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(audioPlayerProvider);
+    final theme = Theme.of(context);
+    final playbarColor = theme.colorScheme.surfaceContainerHighest;
+    final isDarkPlaybar = playbarColor.computeLuminance() < 0.5;
+    final elementColor = isDarkPlaybar ? Colors.white : Colors.black;
+    final inactiveElementColor = elementColor.withValues(alpha: 0.3);
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
@@ -36,14 +41,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(45),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.95),
-                Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.95),
-              ],
-            ),
+            color: playbarColor,
           ),
           child: Material(
             color: Colors.transparent,
@@ -62,6 +60,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                   BubblyIconButton(
                     icon: Icons.shuffle,
                     noShadow: true,
+                    iconColor: elementColor,
                     onPressed: () {
                       ref.read(queueProvider.notifier).toggleShuffle();
                     },
@@ -70,6 +69,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                   BubblyIconButton(
                     icon: Icons.skip_previous,
                     noShadow: true,
+                    iconColor: elementColor,
                     onPressed: () {
                       ref.read(queueProvider.notifier).previous();
                     },
@@ -94,8 +94,8 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                           icon: Icons.play_arrow_rounded,
                           size: 48.0,
                           noShadow: false,
-                          color: Theme.of(context).colorScheme.primary,
-                          iconColor: Theme.of(context).colorScheme.onPrimary,
+                          color: elementColor,
+                          iconColor: isDarkPlaybar ? Colors.black : Colors.white,
                           onPressed: player.play,
                         );
                       } else if (processingState != ProcessingState.completed) {
@@ -103,8 +103,8 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                           icon: Icons.pause_rounded,
                           size: 48.0,
                           noShadow: false,
-                          color: Theme.of(context).colorScheme.primary,
-                          iconColor: Theme.of(context).colorScheme.onPrimary,
+                          color: elementColor,
+                          iconColor: isDarkPlaybar ? Colors.black : Colors.white,
                           onPressed: player.pause,
                         );
                       } else {
@@ -112,8 +112,8 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                           icon: Icons.play_arrow_rounded,
                           size: 48.0,
                           noShadow: false,
-                          color: Theme.of(context).colorScheme.primary,
-                          iconColor: Theme.of(context).colorScheme.onPrimary,
+                          color: elementColor,
+                          iconColor: isDarkPlaybar ? Colors.black : Colors.white,
                           onPressed: () => player.seek(Duration.zero),
                         );
                       }
@@ -123,6 +123,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                   BubblyIconButton(
                     icon: Icons.skip_next,
                     noShadow: true,
+                    iconColor: elementColor,
                     onPressed: () {
                       ref.read(queueProvider.notifier).next();
                     },
@@ -131,8 +132,8 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                   BubblyIconButton(
                     icon: ref.watch(queueProvider).loopMode == AppLoopMode.one ? Icons.repeat_one : Icons.repeat,
                     noShadow: true,
-                    color: ref.watch(queueProvider).loopMode != AppLoopMode.off ? Theme.of(context).colorScheme.primaryContainer : null,
-                    iconColor: ref.watch(queueProvider).loopMode != AppLoopMode.off ? Theme.of(context).colorScheme.onPrimaryContainer : null,
+                    color: ref.watch(queueProvider).loopMode != AppLoopMode.off ? elementColor.withValues(alpha: 0.2) : null,
+                    iconColor: ref.watch(queueProvider).loopMode != AppLoopMode.off ? elementColor : elementColor,
                     onPressed: () {
                       ref.read(queueProvider.notifier).toggleLoop();
                     },
@@ -154,7 +155,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                       
                       return Row(
                         children: [
-                          Text(_formatDuration(position)),
+                          Text(_formatDuration(position), style: TextStyle(color: elementColor)),
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -165,6 +166,9 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                                 ),
                                 max: duration.inMilliseconds > 0 ? duration.inMilliseconds.toDouble() : 1.0,
                                 isPlaying: player.playing,
+                                activeColor: elementColor,
+                                inactiveColor: inactiveElementColor,
+                                thumbColor: elementColor,
                                 onChanged: (val) {
                                   setState(() {
                                     _dragValue = val;
@@ -179,7 +183,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                               ),
                             ),
                           ),
-                          Text(_formatDuration(duration)),
+                          Text(_formatDuration(duration), style: TextStyle(color: elementColor)),
                         ],
                       );
                     },
@@ -199,7 +203,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                     builder: (context, snapshot) {
                       final currentVol = snapshot.data ?? 1.0;
                       return IconButton(
-                        icon: Icon(currentVol > 0 ? Icons.volume_up : Icons.volume_off, size: 28),
+                        icon: Icon(currentVol > 0 ? Icons.volume_up : Icons.volume_off, size: 28, color: elementColor),
                         onPressed: () {
                           if (currentVol > 0) {
                             _lastVolume = currentVol;
@@ -219,6 +223,8 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         return Slider(
                           value: snapshot.data ?? 1.0,
                           max: 1.0,
+                          activeColor: elementColor,
+                          inactiveColor: inactiveElementColor,
                           onChanged: player.setVolume,
                         );
                       },
