@@ -22,13 +22,18 @@
                 "mkdir -p /app/m3p",
                 "cp -r bundle/* /app/m3p/",
                 "mkdir -p /app/bin",
-                "ln -s /app/m3p/m3p_flutter /app/bin/m3p_flutter"
+                "ln -s /app/m3p/m3p_flutter /app/bin/m3p_flutter",
+                "install -Dm644 com.example.M3Player.desktop /app/share/applications/com.example.M3Player.desktop"
             ],
             "sources": [
                 {
                     "type": "dir",
                     "path": "build/linux/x64/release/bundle",
                     "dest": "bundle"
+                },
+                {
+                    "type": "file",
+                    "path": "com.example.M3Player.desktop"
                 }
             ]
         }
