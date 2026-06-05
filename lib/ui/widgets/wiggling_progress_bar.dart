@@ -159,7 +159,7 @@ class _WigglePainter extends CustomPainter {
     final activePaint = Paint()
       ..color = activeColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.0
+      ..strokeWidth = 12.0
       ..strokeCap = StrokeCap.round;
 
     final path = Path();
@@ -188,14 +188,14 @@ class _WigglePainter extends CustomPainter {
       final inactivePaint = Paint()
         ..color = inactiveColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 6.0
+        ..strokeWidth = 12.0
         ..strokeCap = StrokeCap.round;
       canvas.drawLine(Offset(activeWidth, centerY), Offset(size.width, centerY), inactivePaint);
     }
 
     // Draw thumb
     final thumbPaint = Paint()..color = thumbColor;
-    canvas.drawCircle(Offset(activeWidth, centerY), 8.0, thumbPaint);
+    canvas.drawCircle(Offset(activeWidth, centerY), 14.0, thumbPaint);
   }
 
   @override

@@ -122,13 +122,14 @@ class InteractiveAlbumArt extends ConsumerStatefulWidget {
   const InteractiveAlbumArt({Key? key, required this.song}) : super(key: key);
 
   @override
-  ConsumerState<InteractiveAlbumArt> createState() => _InteractiveAlbumArtState();
+  ConsumerState<InteractiveAlbumArt> createState() => _FlippableAlbumArtState();
 }
 
-class _InteractiveAlbumArtState extends ConsumerState<InteractiveAlbumArt> with SingleTickerProviderStateMixin {
+class _FlippableAlbumArtState extends ConsumerState<InteractiveAlbumArt> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _isFlipped = false;
+  bool _isHovered = false;
   String? _bio;
   bool _isLoadingBio = false;
   int _bioDisplayLength = 250;
@@ -212,40 +213,53 @@ class _InteractiveAlbumArtState extends ConsumerState<InteractiveAlbumArt> with 
   Widget build(BuildContext context) {
     final api = ref.read(navidromeClientProvider);
     
-    return GestureDetector(
-      onTap: _toggleFlip,
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          final transform = Matrix4.identity()
-            ..setEntry(3, 2, 0.001)
-            ..rotateY(_animation.value * math.pi);
-            
-          return Transform(
-            transform: transform,
-            alignment: Alignment.center,
-            child: _animation.value < 0.5
-                ? _buildFront(api)
-                : Transform(
-                    transform: Matrix4.identity()..rotateY(math.pi),
-                    alignment: Alignment.center,
-                    child: _buildBack(),
-                  ),
-          );
-        },
+    return MouseRegion(
+      onEnter: (_) {
+        if (mounted) setState(() => _isHovered = true);
+      },
+      onExit: (_) {
+        if (mounted) setState(() => _isHovered = false);
+      },
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: _toggleFlip,
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            final transform = Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY(_animation.value * math.pi);
+              
+            return Transform(
+              transform: transform,
+              alignment: Alignment.center,
+              child: _animation.value < 0.5
+                  ? _buildFront(api)
+                  : Transform(
+                      transform: Matrix4.identity()..rotateY(math.pi),
+                      alignment: Alignment.center,
+                      child: _buildBack(),
+                    ),
+            );
+          },
+        ),
       ),
     );
   }
 
   Widget _buildFront(api) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      transform: _isHovered ? (Matrix4.identity()..scale(1.02)) : Matrix4.identity(),
+      transformAlignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: _isHovered ? 0.6 : 0.3),
+            blurRadius: _isHovered ? 25 : 15,
+            offset: Offset(0, _isHovered ? 15 : 10),
           )
         ],
       ),
@@ -392,45 +406,79 @@ class _InteractiveAlbumArtState extends ConsumerState<InteractiveAlbumArt> with 
   }
 }
 
-class _HorizontalTile extends StatelessWidget {
+class _HorizontalTile extends StatefulWidget {
   final String imageUrl;
   final String title;
   final VoidCallback onTap;
   
   const _HorizontalTile({required this.imageUrl, required this.title, required this.onTap});
-  
+
+  @override
+  State<_HorizontalTile> createState() => _HorizontalTileState();
+}
+
+class _HorizontalTileState extends State<_HorizontalTile> {
+  bool _isHovered = false;
+
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: SizedBox(
-        width: 100,
-        child: Column(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: CachedNetworkImage(
-                imageUrl: imageUrl,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => Container(
-                  width: 100, height: 100,
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  child: Icon(Icons.music_note, color: Theme.of(context).colorScheme.primary),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: SizedBox(
+          width: 100,
+          child: Column(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                transform: _isHovered ? (Matrix4.identity()..translate(0.0, -5.0)) : Matrix4.identity(),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: _isHovered
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 8),
+                          )
+                        ]
+                      : [],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.imageUrl,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) => Container(
+                      width: 100, height: 100,
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      child: Icon(Icons.music_note, color: Theme.of(context).colorScheme.primary),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-          ],
+              const SizedBox(height: 8),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: _isHovered ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                ),
+                child: Text(
+                  widget.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

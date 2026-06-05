@@ -58,17 +58,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       body: Stack(
-        fit: StackFit.expand,
         children: [
-          // Dynamic Background
-          Container(
-            color: Theme.of(context).colorScheme.background,
-          ),
+          // Solid base color
+          Container(color: Theme.of(context).colorScheme.surface),
           
-          // Subtle blurred overlay to retain texture
+          // Subtle ambient background
           if (currentSong != null)
             Opacity(
-              opacity: 0.25,
+              opacity: Theme.of(context).brightness == Brightness.dark ? 0.25 : 0.08,
               child: ImageFiltered(
                 imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
                 child: AnimatedSwitcher(

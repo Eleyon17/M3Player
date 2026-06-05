@@ -373,6 +373,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                       borderRadius: BorderRadius.circular(100),
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
+                    splashBorderRadius: BorderRadius.circular(100),
                     dividerColor: Colors.transparent,
                     labelColor: Theme.of(context).colorScheme.onPrimaryContainer,
                     unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
@@ -547,7 +548,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: songs.length,
                   itemBuilder: (context, index) => SizedBox(
-                    width: 180,
+                    width: 300,
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: SongTile(song: songs[index], showActions: false),
