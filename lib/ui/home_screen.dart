@@ -73,20 +73,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
                     ]
                   : [
-                      Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-                      Theme.of(context).colorScheme.surface,
-                      Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                      Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
+                      Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.4),
+                      Theme.of(context).colorScheme.tertiaryContainer.withValues(alpha: 0.6),
                     ],
               ),
             ),
           ),
           
-          // Subtle blurred overlay to retain texture
+          // Vibrant blurred overlay to make the UI deeply dynamic
           if (currentSong != null)
             Opacity(
-              opacity: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.08,
+              opacity: Theme.of(context).brightness == Brightness.dark ? 0.65 : 0.45,
               child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+                imageFilter: ImageFilter.blur(sigmaX: 120, sigmaY: 120),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 800),
                   child: CachedNetworkImage(

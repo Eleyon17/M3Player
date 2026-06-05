@@ -708,15 +708,6 @@ class _PlaylistsTab extends ConsumerWidget {
                     Expanded(
                       child: Text(p['name'] ?? 'Playlist', maxLines: 1, overflow: TextOverflow.ellipsis),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text('Navidrome', style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onTertiaryContainer, fontWeight: FontWeight.bold)),
-                    ),
                   ],
                 ),
                 subtitle: Text('${p['songCount'] ?? 0} tracks'),
@@ -787,6 +778,49 @@ class _PlaylistSongsTabState extends ConsumerState<_PlaylistSongsTab> {
         title: Text(widget.playlistName),
         backgroundColor: Colors.transparent,
         leading: BackButton(onPressed: () => Navigator.of(context).pop()),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.playlist_add),
+            tooltip: 'Add entire playlist to queue',
+            onPressed: () async {
+              final songs = await _songsFuture;
+              if (songs.isNotEmpty) {
+                ref.read(queueProvider.notifier).addListToQueue(songs);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Playlist added to queue')));
+                }
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_sweep, color: Colors.red),
+            tooltip: 'Clear Playlist',
+            onPressed: () async {
+              showDialog(context: context, builder: (context) => AlertDialog(
+                title: const Text('Clear Playlist?'),
+                content: const Text('This will remove all songs from the playlist.'),
+                actions: [
+                  TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                  TextButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      final songs = await _songsFuture;
+                      final api = ref.read(navidromeClientProvider);
+                      // Since Navidrome requires songIndexesToRemove, we just send all indices
+                      final indices = List.generate(songs.length, (i) => i);
+                      if (indices.isNotEmpty) {
+                        await api.updatePlaylist(widget.playlistId, songIndexesToRemove: indices);
+                        setState(() { _loadSongs(); });
+                        ref.invalidate(navidromePlaylistsProvider);
+                      }
+                    },
+                    child: const Text('Clear', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ));
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<List<Song>>(
         future: _songsFuture,
@@ -923,36 +957,43 @@ class SongTile extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No Navidrome playlists found! Create one first.')));
             return;
           }
-          showDialog(context: context, builder: (context) {
-            return AlertDialog(
-              title: const Text('Add to Playlist'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: playlists.length,
-                  itemBuilder: (context, index) {
-                    final p = playlists[index];
-                    return ListTile(
-                      leading: const Icon(Icons.playlist_add),
-                      title: Text(p['name'] ?? 'Playlist'),
+          
+          if (playlistId != null && playlistSongIndex != null) {
+            // In a playlist, give option to remove or add to another
+            showDialog(context: context, builder: (context) {
+              return AlertDialog(
+                title: const Text('Playlist Options'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                      title: const Text('Remove from this playlist', style: TextStyle(color: Colors.red)),
                       onTap: () async {
-                        await api.updatePlaylist(p['id'], songIdsToAdd: [song.id]);
-                        ref.invalidate(navidromePlaylistsProvider);
+                        await api.updatePlaylist(playlistId!, songIndexesToRemove: [playlistSongIndex!]);
+                        onPlaylistRemoved?.call();
                         if (context.mounted) {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added to ${p['name']}')));
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Removed from Playlist')));
                         }
                       },
-                    );
-                  },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.playlist_add),
+                      title: const Text('Add to another playlist...'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showAddToPlaylistDialog(context, api, playlists, song, ref);
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-              ],
-            );
-          });
+              );
+            });
+          } else {
+            // Not in a playlist, just show add to playlist dialog
+            _showAddToPlaylistDialog(context, api, playlists, song, ref);
+          }
         },
         borderRadius: BorderRadius.circular(16),
         child: Padding(
@@ -1008,20 +1049,6 @@ class SongTile extends ConsumerWidget {
                     },
                     tooltip: "Add to Queue",
                   ),
-                  if (playlistId != null && playlistSongIndex != null) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 28, color: Colors.red),
-                      onPressed: () async {
-                        await api.updatePlaylist(playlistId!, songIndexesToRemove: [playlistSongIndex!]);
-                        onPlaylistRemoved?.call();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Removed from Playlist')));
-                        }
-                      },
-                      tooltip: "Remove from Playlist",
-                    ),
-                  ],
                 ],
               ],
             ),
@@ -1030,6 +1057,39 @@ class SongTile extends ConsumerWidget {
       ),
     ),
   );
+}
+
+void _showAddToPlaylistDialog(BuildContext context, NavidromeClient api, List<dynamic> playlists, Song song, WidgetRef ref) {
+  showDialog(context: context, builder: (context) {
+    return AlertDialog(
+      title: const Text('Add to Playlist'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: playlists.length,
+          itemBuilder: (context, index) {
+            final p = playlists[index];
+            return ListTile(
+              leading: const Icon(Icons.playlist_add),
+              title: Text(p['name'] ?? 'Playlist'),
+              onTap: () async {
+                await api.updatePlaylist(p['id'], songIdsToAdd: [song.id]);
+                ref.invalidate(navidromePlaylistsProvider);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added to ${p['name']}')));
+                }
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+      ],
+    );
+  });
 }
 }
 

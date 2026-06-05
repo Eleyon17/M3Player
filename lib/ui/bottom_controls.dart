@@ -93,27 +93,27 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         return BubblyIconButton(
                           icon: Icons.play_arrow_rounded,
                           size: 48.0,
-                          noShadow: true,
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          noShadow: false,
+                          color: Theme.of(context).colorScheme.primary,
+                          iconColor: Theme.of(context).colorScheme.onPrimary,
                           onPressed: player.play,
                         );
                       } else if (processingState != ProcessingState.completed) {
                         return BubblyIconButton(
                           icon: Icons.pause_rounded,
                           size: 48.0,
-                          noShadow: true,
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          noShadow: false,
+                          color: Theme.of(context).colorScheme.primary,
+                          iconColor: Theme.of(context).colorScheme.onPrimary,
                           onPressed: player.pause,
                         );
                       } else {
                         return BubblyIconButton(
                           icon: Icons.play_arrow_rounded,
                           size: 48.0,
-                          noShadow: true,
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          noShadow: false,
+                          color: Theme.of(context).colorScheme.primary,
+                          iconColor: Theme.of(context).colorScheme.onPrimary,
                           onPressed: () => player.seek(Duration.zero),
                         );
                       }

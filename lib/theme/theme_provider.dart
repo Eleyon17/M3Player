@@ -96,8 +96,11 @@ class ThemeNotifier extends Notifier<ThemeData> {
       final scheme = ColorScheme.fromSeed(
         seedColor: baseColor,
         brightness: isDarkMode ? Brightness.dark : Brightness.light,
+        dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
       ).copyWith(
-        secondary: vibrantForTheme,
+        primary: vibrantForTheme,
+        primaryContainer: vibrantForTheme.withValues(alpha: 0.3),
+        secondary: palette.dominantColor?.color ?? baseColor,
       );
       
       state = _buildTheme(scheme);

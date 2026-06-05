@@ -29,37 +29,30 @@ typedef LyricsParams = ({String id, String title, String? artist});
 final lyricsProvider = FutureProvider.family<LyricsData?, LyricsParams>((ref, params) async {
   final api = ref.read(navidromeClientProvider);
   
-  // 1. Try fetching from LRCLIB for synced lyrics using Search for fuzzy matching
+  // 1. Try fetching from LRCLIB exact match which is much faster
   try {
-    final searchQ = '${params.artist ?? ''} ${params.title}'.trim();
-    final url = Uri.parse('https://lrclib.net/api/search?q=${Uri.encodeComponent(searchQ)}');
-    final response = await http.get(url);
+    final title = params.title;
+    final artist = params.artist ?? '';
+    final url = Uri.parse('https://lrclib.net/api/get?track_name=${Uri.encodeComponent(title)}&artist_name=${Uri.encodeComponent(artist)}');
+    final response = await http.get(url).timeout(const Duration(seconds: 3));
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      if (data.isNotEmpty) {
-        final bestSynced = data.firstWhere(
-          (item) => (item['syncedLyrics'] as String?)?.isNotEmpty == true,
-          orElse: () => null,
-        );
-        
-        if (bestSynced != null) {
-          final lrcString = bestSynced['syncedLyrics'] as String;
-          final parsed = _parseLrc(lrcString);
-          if (parsed.isNotEmpty) {
-            return LyricsData(syncedLyrics: parsed);
-          } else {
-            return LyricsData(plainLyrics: lrcString);
-          }
+      final data = jsonDecode(response.body);
+      final synced = data['syncedLyrics'] as String?;
+      if (synced != null && synced.isNotEmpty) {
+        final parsed = _parseLrc(synced);
+        if (parsed.isNotEmpty) {
+          return LyricsData(syncedLyrics: parsed);
+        } else {
+          return LyricsData(plainLyrics: synced);
         }
-        
-        final plainLrc = data.first['plainLyrics'] as String?;
-        if (plainLrc != null && plainLrc.isNotEmpty) {
-          return LyricsData(plainLyrics: plainLrc);
-        }
+      }
+      final plainLrc = data['plainLyrics'] as String?;
+      if (plainLrc != null && plainLrc.isNotEmpty) {
+        return LyricsData(plainLyrics: plainLrc);
       }
     }
   } catch (e) {
-    print('LRCLIB search failed: $e');
+    print('LRCLIB get failed: $e');
   }
 
   // 2. Fallback to Navidrome API (usually unsynced)

@@ -274,15 +274,15 @@ class QueuePanel extends ConsumerWidget {
                       ),
                       ImplicitlyAnimatedReorderableList<Song>(
                         items: queue,
-                        areItemsTheSame: (oldItem, newItem) => oldItem.id == newItem.id,
+                        areItemsTheSame: (oldItem, newItem) => identical(oldItem, newItem),
                         onReorderFinished: (item, from, to, newItems) {
                           ref.read(queueProvider.notifier).updateQueue(newItems);
                         },
-                        insertDuration: const Duration(milliseconds: 300),
-                        removeDuration: const Duration(milliseconds: 300),
+                        insertDuration: const Duration(milliseconds: 400),
+                        removeDuration: const Duration(milliseconds: 400),
                         itemBuilder: (context, itemAnimation, item, index) {
                           return Reorderable(
-                            key: ValueKey(item.id),
+                            key: ValueKey(identityHashCode(item)),
                             builder: (context, dragAnimation, inDrag) {
                               return SizeFadeTransition(
                                 sizeFraction: 0.7,

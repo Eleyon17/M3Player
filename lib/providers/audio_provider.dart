@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio/just_audio.dart';
@@ -60,25 +61,54 @@ class QueueState {
   }
 }
 
-class QueueNotifier extends Notifier<QueueState> {
+class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
+  Timer? _pollTimer;
+  DateTime _lastLocalUpdate = DateTime.now();
+
   @override
   QueueState build() {
+    WidgetsBinding.instance.addObserver(this);
+    ref.onDispose(() {
+      WidgetsBinding.instance.removeObserver(this);
+      _pollTimer?.cancel();
+      _saveTimer?.cancel();
+    });
+    
     Future.microtask(() {
       _listenToPlayer();
-      _loadQueue();
+      _loadQueue(isInitial: true);
+      _startPolling();
     });
     return QueueState();
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // User returned to the app, do a quick sync
+      _loadQueue(isInitial: false);
+    }
+  }
+
+  void _startPolling() {
+    _pollTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
+      // Only poll if we haven't made a local change in the last 5 seconds
+      if (DateTime.now().difference(_lastLocalUpdate) > const Duration(seconds: 5)) {
+        _loadQueue(isInitial: false);
+      }
+    });
+  }
+
+  @override
   set state(QueueState value) {
     super.state = value;
+    _lastLocalUpdate = DateTime.now();
     _saveQueue();
   }
 
   Timer? _saveTimer;
 
-  Future<void> _loadQueue() async {
+  Future<void> _loadQueue({bool isInitial = false}) async {
     try {
       final queueData = await _api.getPlayQueue();
       if (queueData != null) {
@@ -92,8 +122,6 @@ class QueueNotifier extends Notifier<QueueState> {
         if (currentId != null) {
           final currentIndex = songs.indexWhere((s) => s.id == currentId);
           if (currentIndex != -1) {
-            // Server gives list chronologically: earlier history, current, queue
-            // But our history list has the most recent previous song at index 0.
             savedHistory = songs.sublist(0, currentIndex).reversed.toList();
             savedCurrent = songs[currentIndex];
             savedQueue = songs.sublist(currentIndex + 1);
@@ -104,9 +132,15 @@ class QueueNotifier extends Notifier<QueueState> {
           savedQueue = songs;
         }
         
-        if (savedCurrent != null || savedQueue.isNotEmpty || savedHistory.isNotEmpty) {
+        // If we are just polling, only update the queue if it's actually different to avoid jank.
+        // We do a simple length/id check. If it's different, we update state.
+        final isDifferent = state.currentSong?.id != savedCurrent?.id || 
+                            state.queue.length != savedQueue.length || 
+                            state.history.length != savedHistory.length;
+                            
+        if (isInitial || isDifferent) {
           state = state.copyWith(currentSong: savedCurrent, queue: savedQueue, history: savedHistory);
-          if (savedCurrent != null) {
+          if (savedCurrent != null && isInitial) {
             final itemsToPlay = <Song>[];
             if (Platform.isAndroid || Platform.isIOS) {
               if (savedHistory.isNotEmpty) itemsToPlay.add(savedHistory.first);
@@ -118,7 +152,6 @@ class QueueNotifier extends Notifier<QueueState> {
             final initialIndex = (Platform.isAndroid || Platform.isIOS) && savedHistory.isNotEmpty ? 1 : 0;
             audioHandler.replaceQueue(itemsToPlay, initialIndex: initialIndex);
             
-            // Note: Seeking to saved position is optional but neat!
             final position = queueData['position'] as int?;
             if (position != null && position > 0) {
               audioHandler.seek(Duration(milliseconds: position));
@@ -215,6 +248,7 @@ class QueueNotifier extends Notifier<QueueState> {
         print("Error in replaceQueue: $e");
       });
       _api.scrobble(song.id, submission: false); // Report now playing
+      _preloadLyrics();
     } catch (e) {
       print("Error playing song: $e");
     } finally {
@@ -261,6 +295,10 @@ class QueueNotifier extends Notifier<QueueState> {
   }
 
   void _preloadLyrics() {
+    if (state.currentSong != null) {
+      final song = state.currentSong!;
+      ref.read(translatedLyricsProvider((id: song.id, title: song.title, artist: song.artist)).future);
+    }
     for (int i = 0; i < 2 && i < state.queue.length; i++) {
       // Just reading the provider triggers the network fetch and caches the result
       final song = state.queue[i];
@@ -281,10 +319,18 @@ class QueueNotifier extends Notifier<QueueState> {
     _preloadLyrics();
   }
 
-  void addListToQueue(List<Song> songs) {
+  Future<void> addListToQueue(List<Song> songs) async {
     if (songs.isEmpty) return;
 
-    state = state.copyWith(queue: [...state.queue, ...songs]);
+    if (songs.length > 50) {
+      state = state.copyWith(queue: [...state.queue, ...songs]);
+    } else {
+      for (var song in songs) {
+        await Future.delayed(const Duration(milliseconds: 30));
+        state = state.copyWith(queue: [...state.queue, song]);
+      }
+    }
+
     if (state.currentSong == null) {
       next();
     } else {
@@ -397,8 +443,15 @@ class QueueNotifier extends Notifier<QueueState> {
     playSong(songToPlay);
   }
 
-  void clearQueue() {
-    state = state.copyWith(queue: []);
+  Future<void> clearQueue() async {
+    if (state.queue.length > 50) {
+      state = state.copyWith(queue: []);
+      return;
+    }
+    while (state.queue.isNotEmpty) {
+      await Future.delayed(const Duration(milliseconds: 20));
+      state = state.copyWith(queue: List.from(state.queue)..removeLast());
+    }
   }
 
   void updateQueue(List<Song> newQueue) {
