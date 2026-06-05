@@ -1,0 +1,36 @@
+{
+    "app-id": "com.example.M3Player",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "24.08",
+    "sdk": "org.freedesktop.Sdk",
+    "command": "m3p_flutter",
+    "finish-args": [
+        "--share=network",
+        "--share=ipc",
+        "--socket=x11",
+        "--socket=wayland",
+        "--socket=pulseaudio",
+        "--device=dri",
+        "--filesystem=xdg-music",
+        "--filesystem=xdg-download"
+    ],
+    "modules": [
+        {
+            "name": "m3p",
+            "buildsystem": "simple",
+            "build-commands": [
+                "mkdir -p /app/m3p",
+                "cp -r bundle/* /app/m3p/",
+                "mkdir -p /app/bin",
+                "ln -s /app/m3p/m3p_flutter /app/bin/m3p_flutter"
+            ],
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "build/linux/x64/release/bundle",
+                    "dest": "bundle"
+                }
+            ]
+        }
+    ]
+}
