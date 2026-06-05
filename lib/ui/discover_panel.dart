@@ -206,7 +206,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                   },
                 ),
                 onTap: () {
-                  ref.read(translationLanguageProvider.notifier).state = 'none';
+                  ref.read(translationLanguageProvider.notifier).setLang('none');
                   Navigator.pop(ctx);
                 },
               ),
@@ -221,7 +221,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                   },
                 ),
                 onTap: () {
-                  ref.read(translationLanguageProvider.notifier).state = 'es';
+                  ref.read(translationLanguageProvider.notifier).setLang('es');
                   Navigator.pop(ctx);
                 },
               ),
@@ -236,7 +236,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
                   },
                 ),
                 onTap: () {
-                  ref.read(translationLanguageProvider.notifier).state = 'en';
+                  ref.read(translationLanguageProvider.notifier).setLang('en');
                   Navigator.pop(ctx);
                 },
               ),

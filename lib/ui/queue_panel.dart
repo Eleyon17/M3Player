@@ -169,9 +169,8 @@ class QueuePanel extends ConsumerWidget {
     final queue = queueState.queue;
     final api = ref.read(navidromeClientProvider);
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : Theme.of(context).colorScheme.surface,
+      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
       child: Column(
         children: [
           Padding(

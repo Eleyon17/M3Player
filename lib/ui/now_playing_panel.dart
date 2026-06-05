@@ -349,11 +349,12 @@ class _FlippableAlbumArtState extends ConsumerState<InteractiveAlbumArt> with Si
                               const SizedBox(height: 24),
                               Text("Top Songs", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                               const SizedBox(height: 12),
-                              SizedBox(
-                                height: 140,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: _topSongs!.length,
+                                SizedBox(
+                                  height: 140,
+                                  child: ListView.separated(
+                                    clipBehavior: Clip.none,
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: _topSongs!.length,
                                   separatorBuilder: (_, __) => const SizedBox(width: 16),
                                   itemBuilder: (context, i) {
                                     final s = _topSongs![i];
@@ -372,11 +373,12 @@ class _FlippableAlbumArtState extends ConsumerState<InteractiveAlbumArt> with Si
                               const SizedBox(height: 24),
                               Text("Top Albums", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                               const SizedBox(height: 12),
-                              SizedBox(
-                                height: 140,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: _topAlbums!.length,
+                                SizedBox(
+                                  height: 140,
+                                  child: ListView.separated(
+                                    clipBehavior: Clip.none,
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: _topAlbums!.length,
                                   separatorBuilder: (_, __) => const SizedBox(width: 16),
                                   itemBuilder: (context, i) {
                                     final a = _topAlbums![i];
