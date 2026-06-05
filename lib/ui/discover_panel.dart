@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/translation_provider.dart';
 import '../theme/theme_provider.dart';
+import 'widgets/playlist_collage_icon.dart';
 
 class DiscoverSearchQuery extends Notifier<String> {
   @override
@@ -703,7 +704,7 @@ class _PlaylistsTab extends ConsumerWidget {
             itemBuilder: (context, index) {
               final p = playlists[index];
               return ListTile(
-                leading: const Icon(Icons.queue_music),
+                leading: PlaylistCollageIcon(playlistId: p['id']),
                 title: Row(
                   children: [
                     Expanded(
@@ -815,25 +816,13 @@ class _PlaylistSongsTabState extends ConsumerState<_PlaylistSongsTab> {
               ]
             : [
                 IconButton(
-                  icon: const Icon(Icons.playlist_add),
-                  tooltip: 'Add entire playlist to queue',
-                  onPressed: () async {
-                    final songs = await _songsFuture;
-                    if (songs.isNotEmpty) {
-                      ref.read(queueProvider.notifier).addListToQueue(songs);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Playlist added to queue')));
-                      }
-                    }
-                  },
-                ),
-                TextButton(
                   onPressed: () {
                     setState(() {
                       _isEditMode = true;
                     });
                   },
-                  child: const Text('Remove', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  tooltip: 'Delete Songs',
                 ),
               ],
       ),
