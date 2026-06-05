@@ -66,7 +66,7 @@ class _LyricsPanelState extends ConsumerState<LyricsPanel> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

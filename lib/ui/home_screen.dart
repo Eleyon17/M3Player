@@ -60,7 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: Stack(
         children: [
           // Solid base color
-          Container(color: Theme.of(context).colorScheme.surface),
+          Container(color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.surfaceContainerHighest),
             
           // Subtle ambient background
           if (currentSong != null)

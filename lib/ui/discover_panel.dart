@@ -250,8 +250,9 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
   @override
   Widget build(BuildContext context) {
     final searchQuery = ref.watch(discoverSearchQueryProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      color: isDark ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Column(
         children: [
         // Soft Search Bar
