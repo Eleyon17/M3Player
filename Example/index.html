@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>M3Player</title>
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="M3Player">
+    <meta name="theme-color" content="#FFF7FA">
+    
+    <link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg width='256' height='256' viewBox='0 0 256 256' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='256' height='256' rx='60' fill='url(%23paint0_linear_1_2)'/%3E%3Cpath d='M192 101.991C192 90.7259 180.893 83.2185 170.528 88.0066L140.231 102.001C132.33 105.65 123.67 105.65 115.769 102.001L85.4725 88.0066C75.107 83.2185 64 90.7259 64 101.991V163.66C64 172.684 71.3159 180 80.3404 180C89.3649 180 96.6809 172.684 96.6809 163.66V136.216C96.6809 133.093 100.125 131.189 102.83 132.812L123.659 145.31C126.331 146.913 129.669 146.913 132.341 145.31L153.17 132.812C155.875 131.189 159.319 133.093 159.319 136.216V163.66C159.319 172.684 166.635 180 175.66 180C184.684 180 192 172.684 192 163.66V101.991Z' fill='white'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear_1_2' x1='128' y1='0' x2='128' y2='256' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%238C6DB4'/%3E%3Cstop offset='1' stop-color='%23E1BBEA'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" sizes="256x256" href="data:image/svg+xml,%3Csvg width='256' height='256' viewBox='0 0 256 256' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='256' height='256' rx='60' fill='url(%23paint0_linear_1_2)'/%3E%3Cpath d='M192 101.991C192 90.7259 180.893 83.2185 170.528 88.0066L140.231 102.001C132.33 105.65 123.67 105.65 115.769 102.001L85.4725 88.0066C75.107 83.2185 64 90.7259 64 101.991V163.66C64 172.684 71.3159 180 80.3404 180C89.3649 180 96.6809 172.684 96.6809 163.66V136.216C96.6809 133.093 100.125 131.189 102.83 132.812L123.659 145.31C126.331 146.913 129.669 146.913 132.341 145.31L153.17 132.812C155.875 131.189 159.319 133.093 159.319 136.216V163.66C159.319 172.684 166.635 180 175.66 180C184.684 180 192 172.684 192 163.66V101.991Z' fill='white'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear_1_2' x1='128' y1='0' x2='128' y2='256' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%238C6DB4'/%3E%3Cstop offset='1' stop-color='%23E1BBEA'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E">
+
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="ambient-bg"></div>
+
+    <div id="login-overlay" style="display: none;">
+        <div id="login-card">
+            <h2>Navidrome Connect</h2>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>Server URL</label>
+                    <input type="url" id="nd-url" placeholder="https://music.yourdomain.com" required>
+                </div>
+                <div class="input-group">
+                    <label>Username</label>
+                    <input type="text" id="nd-user" required>
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="nd-pass" required>
+                </div>
+                <button type="submit" class="m3-btn" id="login-submit-btn">Login</button>
+                <div id="login-error"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <aside class="panel" id="discover-panel" style="order: 2;">
+            <div id="search-view">
+                <div class="sticky-header">
+                    <div class="panel-title-wrapper">
+                        <div class="panel-title">Discover</div>
+                        <div class="header-actions">
+                            <button class="action-btn" id="settings-trigger-btn" popovertarget="settings-menu" style="anchor-name: --settings-btn; background: var(--md-sys-color-surface-variant); color: var(--md-sys-color-on-surface-variant); position: relative;" title="Settings">
+                                <span class="material-symbols-rounded">settings</span>
+                                <span id="update-badge" class="notification-badge" style="display:none;"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="search-container">
+                        <div class="search-box">
+                            <span class="material-symbols-rounded">search</span>
+                            <input type="text" id="search-input" placeholder="Search library..." oninput="debounceSearch()">
+                        </div>
+                        <button class="filter-pill" id="search-filter-pill" onclick="cycleSearchFilter()">All</button>
+                    </div>
+                </div>
+                <div class="scrollable-content track-list" id="search-results"></div>
+            </div>
+
+            <div id="detail-view">
+                <div class="sticky-header">
+                    <div class="back-header">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <button class="back-btn" onclick="closeDetailView()"><span class="material-symbols-rounded">arrow_back</span></button>
+                            <span id="detail-title">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="scrollable-content track-list" id="detail-results"></div>
+            </div>
+            
+            <div id="lyrics-view" style="display: none; flex-direction: column; width: 100%;">
+                <div class="sticky-header">
+                    <div class="back-header">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <button class="back-btn" onclick="toggleLyricsView()"><span class="material-symbols-rounded">arrow_back</span></button>
+                            <span>Lyrics</span>
+                        </div>
+                        
+                        <div class="desktop-lyrics-controls" style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; font-weight:normal;">
+                            <button id="lyric-source-toggle" onclick="toggleLyricSource()" style="background:var(--md-sys-color-surface-variant); color:var(--md-sys-color-on-background); border:none; border-radius:0.5rem; padding:0.35rem 0.5rem; outline:none; font-family:inherit; cursor:pointer; font-weight:600; white-space:nowrap;">
+                                Source: Web
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="scrollable-content" id="lyrics-content" style="text-align: center; padding-bottom: 50vh;">
+                    <p style="opacity:0.5; margin-top:2rem; font-size:1.1rem;">Start playing a track to load lyrics.</p>
+                </div>
+                
+
+            </div>
+        </aside>
+
+        <main class="panel center-stage" style="order: 1;">
+            
+            <div class="huge-art-wrapper" id="art-wrapper" onclick="toggleArtFlip()">
+                <div class="art-flip-inner" id="art-flip-inner">
+                    <div class="art-front">
+                        <div class="icon-fallback"><span class="material-symbols-rounded">music_note</span></div>
+                        <div class="spinner huge-spinner"></div>
+                        <img id="main-art" class="track-img" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="Album Art" crossorigin="anonymous">
+                    </div>
+                    <div class="art-back">
+                        <div id="art-back-content"></div>
+                    </div>
+                </div>
+            </div>
+
+
+            
+            <div class="now-playing-info">
+                <div class="title" id="main-title">Ready to Play</div>
+                <div class="artist" id="main-artist">Select a track from Discover</div>
+                <div class="album" id="main-album">--</div>
+                
+                <div class="now-playing-actions">
+                    <button class="icon-btn-ghost" id="fav-btn" onclick="toggleFavorite()" title="Favorite in Navidrome">
+                        <span class="material-symbols-rounded" id="fav-icon">favorite</span>
+                    </button>
+                    <button class="icon-btn-ghost" id="download-btn" onclick="downloadCurrentSong()" title="Download Track">
+                        <span class="material-symbols-rounded">download</span>
+                    </button>
+                    <button class="icon-btn-ghost active" id="reduced-queue-toggle-btn" onclick="toggleReducedQueue()" title="Toggle Up Next Panel">
+                        <span class="material-symbols-rounded">queue_music</span>
+                    </button>
+                    <button class="icon-btn-ghost" id="lyrics-btn" onclick="toggleLyricsView()" title="Toggle Synced Lyrics">
+                        <span class="material-symbols-rounded">lyrics</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <aside class="panel" id="queue-panel" style="background-color: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); order: 3;">
+            <div id="queue-view" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="sticky-header" style="padding-bottom: 1.25rem;">
+                    <div class="panel-title-wrapper" style="margin-bottom: 0;">
+                        <div class="panel-title">
+                            <span class="material-symbols-rounded">queue_music</span> Up Next
+                        </div>
+                        <div class="header-actions">
+                            <button class="bubble-icon-btn" onclick="toggleHistoryView()" title="Recently Played">
+                                <span class="material-symbols-rounded">history</span>
+                            </button>
+                            <button class="bubble-icon-btn remove" onclick="clearQueue()" title="Clear Entire Queue">
+                                <span class="material-symbols-rounded">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="scrollable-content track-list" id="queue-list" style="padding-top: 0;">
+                    <p style="opacity: 0.6; text-align: center; padding: 1.25rem;">Queue is empty.</p>
+                </div>
+                
+                <div id="update-banner" style="display:none;"></div>
+                <div id="instant-mix-banner" class="queue-banner" onclick="triggerInstantMix()">
+                    <span class="material-symbols-rounded">auto_awesome</span> Instant Mix
+                </div>
+            </div>
+
+            <div id="history-view" style="display: none; flex-direction: column; height: 100%; position: absolute; top:0; left:0; right:0; bottom:0; background-color: var(--md-sys-color-primary-container); z-index: 5;">
+                <div class="sticky-header" style="padding-bottom: 1.25rem;">
+                    <div class="back-header" style="margin-bottom: 0;">
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <button class="back-btn bubble-icon-btn" onclick="toggleHistoryView()"><span class="material-symbols-rounded">arrow_back</span></button>
+                            <span>Recently Played</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="scrollable-content track-list" id="history-list" style="padding-top: 0;">
+                    <p style="opacity: 0.6; text-align: center; padding: 1.25rem;">History is empty.</p>
+                </div>
+            </div>
+        </aside>
+
+        <footer class="bottom-bar" style="order: 4;">
+            <div class="player-controls">
+                <button class="ctrl-btn mobile-only-btn" onclick="toggleMobileDiscover()" title="Discover Music">
+                    <span class="material-symbols-rounded">explore</span>
+                </button>
+                <button class="ctrl-btn" id="shuffle-btn" onclick="shuffleAction()" title="Shuffle Queue / Add 10">
+                    <span class="material-symbols-rounded">shuffle</span>
+                </button>
+                <button class="ctrl-btn" onclick="prevTrack()" title="Previous (Shift + Left)">
+                    <span class="material-symbols-rounded">skip_previous</span>
+                </button>
+                <button class="ctrl-btn play-pause" onclick="togglePlayPause()" title="Play/Pause (Space)">
+                    <span class="material-symbols-rounded" id="play-icon">play_arrow</span>
+                </button>
+                <button class="ctrl-btn" onclick="nextTrack()" title="Next (Shift + Right)">
+                    <span class="material-symbols-rounded">skip_next</span>
+                </button>
+                <button class="ctrl-btn" id="loop-btn" onclick="toggleLoop()" title="Loop Track">
+                    <span class="material-symbols-rounded">repeat</span>
+                </button>
+                <button class="ctrl-btn mobile-only-btn" onclick="toggleMobileQueue()" title="View Queue">
+                    <span class="material-symbols-rounded">queue_music</span>
+                </button>
+            </div>
+
+            <div class="progress-wrapper">
+                <span id="time-current">0:00</span>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress-fill">
+                            <div class="progress-orb" id="progress-orb"></div>
+                        </div>
+                    </div>
+                    <input type="range" id="seek-slider" min="0" max="1000" value="0">
+                </div>
+                <span id="time-total">0:00</span>
+            </div>
+
+            <div class="volume-wrapper">
+                <button class="ctrl-btn" onclick="toggleMute()" style="padding: 0.25rem;" title="Mute/Unmute">
+                    <span class="material-symbols-rounded" id="mute-icon">volume_up</span>
+                </button>
+                <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.01" value="1">
+            </div>
+        </footer>
+    </div>
+
+    <div id="settings-menu" popover="auto">
+        <button class="settings-item" onclick="document.getElementById('translation-dialog').showModal(); document.getElementById('settings-menu').hidePopover();">
+            <span class="material-symbols-rounded">translate</span>
+            <span>Translation</span>
+        </button>
+        <button class="settings-item" id="theme-btn" onclick="toggleTheme(); document.getElementById('settings-menu').hidePopover();">
+            <span class="material-symbols-rounded">dark_mode</span>
+            <span>Toggle Theme</span>
+        </button>
+        <button class="settings-item" onclick="document.getElementById('changelog-dialog').showModal(); document.getElementById('settings-menu').hidePopover(); loadChangelog();">
+            <span class="material-symbols-rounded">history</span>
+            <span>Changelog</span>
+        </button>
+        <button class="settings-item" onclick="document.getElementById('logout-dialog').showModal(); document.getElementById('settings-menu').hidePopover();">
+            <span class="material-symbols-rounded">logout</span>
+            <span>Logout</span>
+        </button>
+    </div>
+
+    <dialog id="changelog-dialog">
+        <div class="dialog-content">
+            <span class="material-symbols-rounded dialog-icon">history</span>
+            <h3>Changelog</h3>
+            <div id="changelog-content" style="max-height: 40vh; overflow-y: auto; margin-top: 1rem; margin-bottom: 0.5rem; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; background: var(--md-sys-color-surface-variant); padding: 1rem; border-radius: 0.5rem; color: var(--md-sys-color-on-surface-variant); text-align: left;"></div>
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="document.getElementById('changelog-dialog').close()">Close</button>
+        </div>
+    </dialog>
+
+    <dialog id="translation-dialog">
+        <div class="dialog-content">
+            <span class="material-symbols-rounded dialog-icon">translate</span>
+            <h3>Translation</h3>
+            <p style="margin-bottom: 0.5rem;">Translate to:</p>
+            <select id="lyrics-lang" onchange="triggerTranslation()" style="background:var(--md-sys-color-surface-variant); color:var(--md-sys-color-on-background); border:none; border-radius:0.5rem; padding:0.5rem 1rem; outline:none; font-family:inherit; cursor:pointer; width: 100%; font-size: 1rem;">
+                <option value="none">Original</option>
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+            </select>
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="document.getElementById('translation-dialog').close()">Close</button>
+        </div>
+    </dialog>
+
+    <dialog id="logout-dialog">
+        <div class="dialog-content">
+            <span class="material-symbols-rounded dialog-icon">logout</span>
+            <h3>Log Out</h3>
+            <p>Are you sure you want to log out of M3Player?</p>
+        </div>
+        <div class="dialog-actions">
+            <button class="dialog-btn secondary" onclick="document.getElementById('logout-dialog').close()">Cancel</button>
+            <button class="dialog-btn primary" onclick="logout()">Log Out</button>
+        </div>
+    </dialog>
+
+        <script src="scripts.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a01ce4f1bbeaaddf',t:'MTc3OTc5OTcwOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a020b605f9f1f485',t:'MTc3OTgzOTcyOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a048c28a4a562c38',t:'MTc4MDI1OTY3Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

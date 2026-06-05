@@ -91,17 +91,41 @@ class ThemeNotifier extends Notifier<ThemeData> {
       final h = hsl.hue;
       final s = hsl.saturation;
       
-      final vibrantForTheme = isDarkMode ? (palette.darkVibrantColor?.color ?? baseColor) : (palette.lightVibrantColor?.color ?? baseColor);
-
-      final scheme = ColorScheme.fromSeed(
-        seedColor: baseColor,
-        brightness: isDarkMode ? Brightness.dark : Brightness.light,
-        dynamicSchemeVariant: DynamicSchemeVariant.fidelity,
-      ).copyWith(
-        primary: vibrantForTheme,
-        primaryContainer: vibrantForTheme.withValues(alpha: 0.3),
-        secondary: palette.dominantColor?.color ?? baseColor,
-      );
+      ColorScheme scheme;
+      
+      if (isDarkMode) {
+        scheme = ColorScheme.fromSeed(
+          seedColor: baseColor,
+          brightness: Brightness.dark,
+        ).copyWith(
+          background: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.10).toColor(),
+          surface: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.12).toColor(),
+          surfaceContainerHighest: HSLColor.fromAHSL(1.0, h, (s - 0.15).clamp(0.0, 1.0), 0.20).toColor(),
+          secondaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.20).clamp(0.0, 1.0), 0.25).toColor(),
+          primary: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
+          primaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.75).toColor(),
+          onPrimaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.15).toColor(),
+          onBackground: HSLColor.fromAHSL(1.0, h, s, 0.90).toColor(),
+          onSurfaceVariant: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
+          onSecondaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.85).toColor(),
+        );
+      } else {
+        scheme = ColorScheme.fromSeed(
+          seedColor: baseColor,
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: HSLColor.fromAHSL(1.0, h, s, 0.30).toColor(),
+          background: HSLColor.fromAHSL(1.0, h, s, 0.96).toColor(),
+          surface: HSLColor.fromAHSL(1.0, h, s, 0.94).toColor(),
+          surfaceContainerHighest: HSLColor.fromAHSL(1.0, h, s, 0.90).toColor(),
+          secondaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.88).toColor(),
+          primaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
+          onPrimaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.15).toColor(),
+          onBackground: HSLColor.fromAHSL(1.0, h, s, 0.10).toColor(),
+          onSurfaceVariant: HSLColor.fromAHSL(1.0, h, s, 0.25).toColor(),
+          onSecondaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.20).toColor(),
+        );
+      }
       
       state = _buildTheme(scheme);
     } catch (e) {

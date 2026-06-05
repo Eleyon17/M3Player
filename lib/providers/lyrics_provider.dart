@@ -24,7 +24,7 @@ class LyricsData {
   bool get hasSynced => syncedLyrics != null && syncedLyrics!.isNotEmpty;
 }
 
-typedef LyricsParams = ({String id, String title, String? artist});
+typedef LyricsParams = ({String id, String title, String? artist, String? album});
 
 final lyricsProvider = FutureProvider.family<LyricsData?, LyricsParams>((ref, params) async {
   final api = ref.read(navidromeClientProvider);
@@ -35,7 +35,7 @@ final lyricsProvider = FutureProvider.family<LyricsData?, LyricsParams>((ref, pa
   try {
     final title = params.title;
     final artist = params.artist ?? '';
-    final url = Uri.parse('https://lrclib.net/api/get?track_name=${Uri.encodeComponent(title)}&artist_name=${Uri.encodeComponent(artist)}');
+    final url = Uri.parse('https://lrclib.net/api/get?track_name=${Uri.encodeComponent(title)}&artist_name=${Uri.encodeComponent(artist)}&album_name=${Uri.encodeComponent(params.album ?? '')}');
     final response = await http.get(url).timeout(const Duration(seconds: 3));
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);

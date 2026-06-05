@@ -297,12 +297,12 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
   void _preloadLyrics() {
     if (state.currentSong != null) {
       final song = state.currentSong!;
-      ref.read(translatedLyricsProvider((id: song.id, title: song.title, artist: song.artist)).future);
+      ref.read(translatedLyricsProvider((id: song.id, title: song.title, artist: song.artist, album: song.album)).future);
     }
     for (int i = 0; i < 2 && i < state.queue.length; i++) {
       // Just reading the provider triggers the network fetch and caches the result
       final song = state.queue[i];
-      ref.read(translatedLyricsProvider((id: song.id, title: song.title, artist: song.artist)).future);
+      ref.read(translatedLyricsProvider((id: song.id, title: song.title, artist: song.artist, album: song.album)).future);
     }
   }
 

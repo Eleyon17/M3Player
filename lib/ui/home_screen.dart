@@ -60,31 +60,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Dynamic Gradient Background
+          // Dynamic Background
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: Theme.of(context).brightness == Brightness.dark
-                  ? [
-                      Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
-                      Theme.of(context).colorScheme.surface,
-                    ]
-                  : [
-                      Theme.of(context).colorScheme.surfaceContainerLow,
-                      Theme.of(context).colorScheme.surface,
-                    ],
-              ),
-            ),
+            color: Theme.of(context).colorScheme.background,
           ),
           
           // Subtle blurred overlay to retain texture
           if (currentSong != null)
             Opacity(
-              opacity: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.08,
+              opacity: 0.25,
               child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+                imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 800),
                   child: CachedNetworkImage(
@@ -302,9 +288,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Container(
       key: const ValueKey('discover'),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark 
-            ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
-            : Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -327,9 +311,7 @@ class _BoxedQueue extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark 
-            ? Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5)
-            : Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
