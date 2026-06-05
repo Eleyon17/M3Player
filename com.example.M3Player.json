@@ -28,6 +28,25 @@
             ]
         },
         {
+            "name": "libplacebo",
+            "buildsystem": "meson",
+            "config-opts": [
+                "-Dtests=false",
+                "-Ddemos=false",
+                "-Dvulkan=enabled",
+                "-Dshaderc=disabled",
+                "-Dglslang=disabled"
+            ],
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://github.com/haasn/libplacebo.git",
+                    "tag": "v7.360.1",
+                    "commit": "cee9b076f2c63104ccfd497fa79c39a867293ec4"
+                }
+            ]
+        },
+        {
             "name": "mpv",
             "buildsystem": "meson",
             "config-opts": [
