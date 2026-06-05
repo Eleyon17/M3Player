@@ -2,8 +2,8 @@
 Version=1.0
 Type=Application
 Name=M3Player
-Comment=A beautiful music player
-Exec=m3p_flutter
+Comment=M3P Flutter Media Player
+Exec=m3p_flutter %u
 Icon=com.example.M3Player
 Terminal=false
 Categories=AudioVideo;Audio;Player;

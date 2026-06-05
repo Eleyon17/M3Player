@@ -75,7 +75,8 @@
                 "cp -r bundle/* /app/m3p/",
                 "mkdir -p /app/bin",
                 "ln -s /app/m3p/m3p_flutter /app/bin/m3p_flutter",
-                "install -Dm644 com.example.M3Player.desktop /app/share/applications/com.example.M3Player.desktop"
+                "install -Dm644 com.example.M3Player.desktop /app/share/applications/com.example.M3Player.desktop",
+                "install -Dm644 Icon-512.png /app/share/icons/hicolor/512x512/apps/com.example.M3Player.png"
             ],
             "sources": [
                 {
@@ -86,6 +87,10 @@
                 {
                     "type": "file",
                     "path": "com.example.M3Player.desktop"
+                },
+                {
+                    "type": "file",
+                    "path": "build/web/icons/Icon-512.png"
                 }
             ]
         }
