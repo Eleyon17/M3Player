@@ -61,7 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           // Solid base color
           Container(color: Theme.of(context).colorScheme.surface),
-          
+            
           // Subtle ambient background
           if (currentSong != null)
             Opacity(
@@ -84,7 +84,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             
           // Main UI
           Container(
-            color: Colors.transparent, // Removed dark tint to brighten
+            color: Colors.transparent,
             child: Column(
           children: [
             Expanded(

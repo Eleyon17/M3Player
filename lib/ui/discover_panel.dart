@@ -250,8 +250,10 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
   @override
   Widget build(BuildContext context) {
     final searchQuery = ref.watch(discoverSearchQueryProvider);
-    return Column(
-      children: [
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerLowest,
+      child: Column(
+        children: [
         // Soft Search Bar
         Padding(
           padding: const EdgeInsets.all(16.0),
@@ -399,7 +401,8 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
             ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -532,12 +535,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text("From Artists you like", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            child: Text("From Artists you like", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           ),
         ),
         SliverToBoxAdapter(
           child: SizedBox(
-            height: 120, // Compact Song Tiles
+            height: 140, // Compact Song Tiles
             child: FutureBuilder<List<Song>>(
               future: _favoriteArtistsFuture,
               builder: (context, snapshot) {
@@ -549,7 +552,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: songs.length,
                   itemBuilder: (context, index) => SizedBox(
-                    width: 300,
+                    width: 320,
                     child: Padding(
                       padding: const EdgeInsets.only(right: 8.0),
                       child: SongTile(song: songs[index], showActions: false),
@@ -565,12 +568,12 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text("Highlights of the Day", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            child: Text("Highlights of the Day", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           ),
         ),
         SliverToBoxAdapter(
           child: SizedBox(
-            height: 200,
+            height: 240,
             child: FutureBuilder<List<Map<String, dynamic>>>(
               future: api.getRandomArtists(5),
               builder: (context, snapshot) {
@@ -597,7 +600,7 @@ class _HomeTabState extends ConsumerState<_HomeTab> {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-            child: Text("Rediscover", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            child: Text("Rediscover", style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
           ),
         ),
         FutureBuilder<List<Song>>(
@@ -1034,8 +1037,8 @@ class SongTile extends ConsumerWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: SizedBox(
-                width: 64,
-                height: 64,
+                width: 80,
+                height: 80,
                 child: AspectRatio(
                   aspectRatio: 1,
                   child: CachedNetworkImage(

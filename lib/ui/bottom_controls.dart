@@ -54,7 +54,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
               Expanded(
                 flex: 1,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     BubblyIconButton(
                       icon: Icons.shuffle,
@@ -64,7 +64,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         ref.read(queueProvider.notifier).toggleShuffle();
                       },
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 16),
                     BubblyIconButton(
                       icon: Icons.skip_previous,
                       noShadow: true,
@@ -73,7 +73,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         ref.read(queueProvider.notifier).previous();
                       },
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 16),
                     StreamBuilder<PlayerState>(
                       stream: player.playerStateStream,
                       builder: (context, snapshot) {
@@ -83,42 +83,51 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         if (processingState == ProcessingState.loading ||
                             processingState == ProcessingState.buffering) {
                           return Container(
-                            margin: const EdgeInsets.all(8.0),
+                            margin: const EdgeInsets.symmetric(horizontal: 16.0),
                             width: 48.0,
                             height: 48.0,
                             child: const CircularProgressIndicator(),
                           );
                         } else if (playing != true) {
-                          return BubblyIconButton(
-                            icon: Icons.play_arrow_rounded,
-                            size: 48.0,
-                            noShadow: false,
-                            color: Theme.of(context).colorScheme.primary,
-                            iconColor: Theme.of(context).colorScheme.onPrimary,
-                            onPressed: player.play,
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: BubblyIconButton(
+                              icon: Icons.play_arrow_rounded,
+                              size: 48.0,
+                              noShadow: false,
+                              color: Theme.of(context).colorScheme.primary,
+                              iconColor: Theme.of(context).colorScheme.onPrimary,
+                              onPressed: player.play,
+                            ),
                           );
                         } else if (processingState != ProcessingState.completed) {
-                          return BubblyIconButton(
-                            icon: Icons.pause_rounded,
-                            size: 48.0,
-                            noShadow: false,
-                            color: Theme.of(context).colorScheme.primary,
-                            iconColor: Theme.of(context).colorScheme.onPrimary,
-                            onPressed: player.pause,
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: BubblyIconButton(
+                              icon: Icons.pause_rounded,
+                              size: 48.0,
+                              noShadow: false,
+                              color: Theme.of(context).colorScheme.primary,
+                              iconColor: Theme.of(context).colorScheme.onPrimary,
+                              onPressed: player.pause,
+                            ),
                           );
                         } else {
-                          return BubblyIconButton(
-                            icon: Icons.play_arrow_rounded,
-                            size: 48.0,
-                            noShadow: false,
-                            color: Theme.of(context).colorScheme.primary,
-                            iconColor: Theme.of(context).colorScheme.onPrimary,
-                            onPressed: () => player.seek(Duration.zero),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: BubblyIconButton(
+                              icon: Icons.play_arrow_rounded,
+                              size: 48.0,
+                              noShadow: false,
+                              color: Theme.of(context).colorScheme.primary,
+                              iconColor: Theme.of(context).colorScheme.onPrimary,
+                              onPressed: () => player.seek(Duration.zero),
+                            ),
                           );
                         }
                       },
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 16),
                     BubblyIconButton(
                       icon: Icons.skip_next,
                       noShadow: true,
@@ -127,7 +136,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         ref.read(queueProvider.notifier).next();
                       },
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 16),
                     BubblyIconButton(
                       icon: ref.watch(queueProvider).loopMode == AppLoopMode.one ? Icons.repeat_one : Icons.repeat,
                       noShadow: true,

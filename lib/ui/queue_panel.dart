@@ -170,7 +170,7 @@ class QueuePanel extends ConsumerWidget {
     final api = ref.read(navidromeClientProvider);
 
     return Container(
-      color: Colors.transparent,
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: Column(
         children: [
           Padding(
@@ -330,9 +330,9 @@ class QueuePanel extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5)),
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
