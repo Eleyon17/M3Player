@@ -19,8 +19,8 @@ if [ -d "build/linux/x64/release/bundle" ]; then
     tar -czf "$TARGET/M3Player-Linux-Native.tar.gz" -C build/linux/x64/release/bundle .
     
     echo "📦 Building Flatpak..."
-    flatpak-builder --force-clean build-dir com.example.M3Player.json
-    flatpak build-export repo build-dir
+    rm -rf .flatpak-builder build-dir repo
+    flatpak-builder --disable-cache --repo=repo build-dir com.example.M3Player.json
     flatpak build-bundle repo "$TARGET/M3Player-Linux.flatpak" com.example.M3Player
     
     echo "✅ Copied Linux Native bundle into AllBuilds/Linux-Native, created .tar.gz, and built Flatpak"
