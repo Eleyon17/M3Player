@@ -16,6 +16,7 @@ import 'ui/home_screen.dart';
 
 import 'dart:io';
 import 'dart:ui';
+import 'api/proxy_server.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -39,6 +40,7 @@ class NoScrollbarBehavior extends ScrollBehavior {
   };
 }
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 late MyAudioHandler audioHandler;
 
 void main() async {
@@ -49,6 +51,8 @@ void main() async {
   }
   
   if (!kIsWeb) {
+    await ProxyServer.start();
+
     HttpOverrides.global = MyHttpOverrides();
     if (Platform.isLinux || Platform.isWindows) {
       JustAudioMediaKit.ensureInitialized();
@@ -97,6 +101,7 @@ class MyApp extends ConsumerWidget {
     final theme = ref.watch(themeProvider);
     
     return MaterialApp(
+      scaffoldMessengerKey: scaffoldMessengerKey,
       title: 'M3Player',
       debugShowCheckedModeBanner: false,
       scrollBehavior: NoScrollbarBehavior(),

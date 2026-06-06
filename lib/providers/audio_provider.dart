@@ -245,6 +245,13 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
 
       await audioHandler.replaceQueue(itemsToPlay, initialIndex: initialIndex).catchError((e) {
         print("Error in replaceQueue: $e");
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text('Audio Engine Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          )
+        );
       });
       audioHandler.play();
       _api.scrobble(song.id, submission: false); // Report now playing

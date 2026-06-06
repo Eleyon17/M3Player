@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:flutter/foundation.dart';
 import '../models/song.dart';
 import '../api/navidrome_client.dart';
+import '../api/proxy_server.dart';
 
 class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   final AudioPlayer player;
@@ -302,7 +304,11 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
 
   Future<void> replaceQueue(List<Song> songs, {int initialIndex = 0}) async {
-    final sources = songs.map((s) => AudioSource.uri(Uri.parse(api.getStreamUrl(s.id)), tag: _songToMediaItem(s))).toList();
+    final sources = songs.map((s) {
+      final rawUrl = api.getStreamUrl(s.id);
+      final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
+      return AudioSource.uri(Uri.parse(proxyUrl), tag: _songToMediaItem(s));
+    }).toList();
     if (sources.isNotEmpty) {
       mediaItem.add(sources[initialIndex].tag as MediaItem);
     }
@@ -311,7 +317,11 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   }
   
   Future<void> addSongsToQueue(List<Song> songs) async {
-    final sources = songs.map((s) => AudioSource.uri(Uri.parse(api.getStreamUrl(s.id)), tag: _songToMediaItem(s))).toList();
+    final sources = songs.map((s) {
+      final rawUrl = api.getStreamUrl(s.id);
+      final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
+      return AudioSource.uri(Uri.parse(proxyUrl), tag: _songToMediaItem(s));
+    }).toList();
     await _playlist.addAll(sources);
   }
 }
