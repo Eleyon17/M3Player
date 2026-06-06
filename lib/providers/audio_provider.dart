@@ -243,10 +243,10 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
         itemsToPlay.add(song);
       }
 
-      audioHandler.play();
-      audioHandler.replaceQueue(itemsToPlay, initialIndex: initialIndex).catchError((e) {
+      await audioHandler.replaceQueue(itemsToPlay, initialIndex: initialIndex).catchError((e) {
         print("Error in replaceQueue: $e");
       });
+      audioHandler.play();
       _api.scrobble(song.id, submission: false); // Report now playing
       _preloadLyrics();
     } catch (e) {

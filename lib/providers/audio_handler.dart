@@ -266,8 +266,8 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     try {
       final song = await api.getSong(mediaId);
       if (song != null) {
+        await replaceQueue([song]);
         play();
-        replaceQueue([song]);
       }
     } catch (_) {}
   }
@@ -276,8 +276,8 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   Future<void> playFromSearch(String query, [Map<String, dynamic>? extras]) async {
     final results = await search(query);
     if (results.isNotEmpty) {
+      await replaceQueue([Song.fromJson(results.first.extras!)]);
       play();
-      replaceQueue([Song.fromJson(results.first.extras!)]);
     }
   }
 
@@ -296,6 +296,9 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   Future<void> replaceQueue(List<Song> songs, {int initialIndex = 0}) async {
     final sources = songs.map((s) => AudioSource.uri(Uri.parse(api.getStreamUrl(s.id)), tag: _songToMediaItem(s))).toList();
+    if (sources.isNotEmpty) {
+      mediaItem.add(sources[initialIndex].tag as MediaItem);
+    }
     if (sources.length == 1) {
       await player.setAudioSource(sources.first);
     } else {
