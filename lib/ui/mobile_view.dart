@@ -326,26 +326,29 @@ class _MobileViewState extends ConsumerState<MobileView> {
                           );
                         } else if (playing != true) {
                           return BubblyIconButton(
-                            icon: Icons.play_circle_outline,
-                            size: 40.0,
+                            customIcon: HollowPlayIcon(
+                              size: 40.0,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
                             color: Theme.of(context).colorScheme.primaryContainer,
-                            iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             onPressed: player.play,
                           );
                         } else if (processingState != ProcessingState.completed) {
                           return BubblyIconButton(
-                            icon: Icons.pause_circle_outline,
-                            size: 40.0,
+                            customIcon: HollowPauseIcon(
+                              size: 40.0,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
                             color: Theme.of(context).colorScheme.primaryContainer,
-                            iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             onPressed: player.pause,
                           );
                         } else {
                           return BubblyIconButton(
-                            icon: Icons.play_circle_outline,
-                            size: 40.0,
+                            customIcon: HollowPlayIcon(
+                              size: 40.0,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
                             color: Theme.of(context).colorScheme.primaryContainer,
-                            iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             onPressed: () => player.seek(Duration.zero),
                           );
                         }
@@ -398,4 +401,82 @@ class _MobileViewState extends ConsumerState<MobileView> {
       ),
     );
   }
+}
+
+class HollowPlayIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+  const HollowPlayIcon({Key? key, required this.size, required this.color}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _HollowPlayPainter(color: color),
+    );
+  }
+}
+
+class _HollowPlayPainter extends CustomPainter {
+  final Color color;
+  _HollowPlayPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    path.moveTo(size.width * 0.35, size.height * 0.25);
+    path.lineTo(size.width * 0.75, size.height * 0.5);
+    path.lineTo(size.width * 0.35, size.height * 0.75);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class HollowPauseIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+  const HollowPauseIcon({Key? key, required this.size, required this.color}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _HollowPausePainter(color: color),
+    );
+  }
+}
+
+class _HollowPausePainter extends CustomPainter {
+  final Color color;
+  _HollowPausePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    path.addRect(Rect.fromLTRB(size.width * 0.3, size.height * 0.25, size.width * 0.45, size.height * 0.75));
+    path.addRect(Rect.fromLTRB(size.width * 0.55, size.height * 0.25, size.width * 0.7, size.height * 0.75));
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

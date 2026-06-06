@@ -83,7 +83,8 @@ class _BubblyButtonState extends State<BubblyButton> with SingleTickerProviderSt
 }
 
 class BubblyIconButton extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget? customIcon;
   final VoidCallback? onPressed;
   final Color? color;
   final Color? iconColor;
@@ -92,13 +93,15 @@ class BubblyIconButton extends StatelessWidget {
 
   const BubblyIconButton({
     Key? key,
-    required this.icon,
+    this.icon,
+    this.customIcon,
     this.onPressed,
     this.color,
     this.iconColor,
     this.size = 24.0,
     this.noShadow = false,
-  }) : super(key: key);
+  }) : assert(icon != null || customIcon != null),
+       super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +110,7 @@ class BubblyIconButton extends StatelessWidget {
       color: color ?? Colors.transparent,
       padding: 12.0,
       noShadow: noShadow,
-      child: Icon(icon, color: iconColor ?? Theme.of(context).colorScheme.onSurface, size: size),
+      child: customIcon ?? Icon(icon, color: iconColor ?? Theme.of(context).colorScheme.onSurface, size: size),
     );
   }
 }
