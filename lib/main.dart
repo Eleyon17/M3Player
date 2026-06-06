@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'api/navidrome_client.dart';
 import 'providers/audio_provider.dart';
@@ -43,6 +44,10 @@ late MyAudioHandler audioHandler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  if (Platform.isAndroid) {
+    await Permission.notification.request();
+  }
+  
   if (!kIsWeb) {
     HttpOverrides.global = MyHttpOverrides();
     JustAudioMediaKit.ensureInitialized();
@@ -65,7 +70,7 @@ void main() async {
       androidNotificationChannelName: 'Audio playback',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
-      androidNotificationIcon: 'mipmap/ic_launcher',
+      androidNotificationIcon: 'drawable/ic_stat_music',
     ),
   );
 

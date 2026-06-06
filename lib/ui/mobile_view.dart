@@ -335,10 +335,9 @@ class _MobileViewState extends ConsumerState<MobileView> {
                           );
                         } else if (processingState != ProcessingState.completed) {
                           return BubblyIconButton(
-                            customIcon: HollowPauseIcon(
-                              size: 40.0,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            ),
+                            icon: Icons.pause_rounded,
+                            size: 40.0,
+                            iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: player.pause,
                           );
@@ -426,7 +425,7 @@ class _HollowPlayPainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5
+      ..strokeWidth = 4.0
       ..strokeJoin = StrokeJoin.round
       ..strokeCap = StrokeCap.round;
 
