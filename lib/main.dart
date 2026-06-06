@@ -50,7 +50,9 @@ void main() async {
   
   if (!kIsWeb) {
     HttpOverrides.global = MyHttpOverrides();
-    JustAudioMediaKit.ensureInitialized();
+    if (Platform.isLinux || Platform.isWindows) {
+      JustAudioMediaKit.ensureInitialized();
+    }
   }
 
   final prefs = await SharedPreferences.getInstance();

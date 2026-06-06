@@ -299,12 +299,8 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     if (sources.isNotEmpty) {
       mediaItem.add(sources[initialIndex].tag as MediaItem);
     }
-    if (sources.length == 1) {
-      await player.setAudioSource(sources.first);
-    } else {
-      _playlist = ConcatenatingAudioSource(children: sources);
-      await player.setAudioSource(_playlist, initialIndex: initialIndex);
-    }
+    _playlist = ConcatenatingAudioSource(children: sources);
+    await player.setAudioSource(_playlist, initialIndex: initialIndex);
   }
   
   Future<void> addSongsToQueue(List<Song> songs) async {
