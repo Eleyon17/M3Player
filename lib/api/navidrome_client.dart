@@ -20,8 +20,10 @@ class NavidromeClient {
   bool get isConfigured => url.isNotEmpty && user.isNotEmpty && pass.isNotEmpty;
 
   void configure(String url, String user, String pass) {
-    // Remove trailing slash if present
-    this.url = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
+    this.url = url.trim();
+    if (this.url.endsWith('/')) {
+      this.url = this.url.substring(0, this.url.length - 1);
+    }
     this.user = user;
     this.pass = pass;
     _generateAuth();
