@@ -72,11 +72,11 @@ void main() async {
   audioHandler = await AudioService.init(
     builder: () => MyAudioHandler(AudioPlayer(), navidromeClient),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
-      androidNotificationChannelName: 'Audio playback',
+      androidNotificationChannelId: 'com.m3player.app.audio.channel.v2',
+      androidNotificationChannelName: 'M3Player Audio',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
-      androidNotificationIcon: 'drawable/ic_stat_music',
+      androidNotificationIcon: 'mipmap/ic_launcher',
     ),
   );
 
