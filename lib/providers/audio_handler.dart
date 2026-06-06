@@ -15,6 +15,21 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   MyAudioHandler(this.player, this.api) {
     player.setAudioSource(_playlist);
+    playbackState.add(playbackState.value.copyWith(
+      controls: [MediaControl.skipToPrevious, MediaControl.play, MediaControl.skipToNext],
+      systemActions: const {
+        MediaAction.seek,
+        MediaAction.seekForward,
+        MediaAction.seekBackward,
+        MediaAction.play,
+        MediaAction.pause,
+        MediaAction.skipToNext,
+        MediaAction.skipToPrevious,
+      },
+      androidCompactActionIndices: const [0, 1, 2],
+      processingState: AudioProcessingState.idle,
+      playing: false,
+    ));
     _listenToPlayerState();
     _listenToSequenceState();
   }
@@ -32,18 +47,6 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             label: 'Favorite',
             action: MediaAction.custom,
             customAction: CustomMediaAction(name: customActionFavorite),
-          ),
-          const MediaControl(
-            androidIcon: 'drawable/ic_stat_shuffle',
-            label: 'Shuffle',
-            action: MediaAction.custom,
-            customAction: CustomMediaAction(name: customActionShuffle),
-          ),
-          const MediaControl(
-            androidIcon: 'drawable/ic_stat_loop',
-            label: 'Loop',
-            action: MediaAction.custom,
-            customAction: CustomMediaAction(name: customActionLoop),
           )
         ],
         systemActions: const {
