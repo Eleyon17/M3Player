@@ -236,32 +236,17 @@ class _MobileViewState extends ConsumerState<MobileView> {
   Widget _buildMobilePlaybar(BuildContext context, WidgetRef ref) {
     final player = ref.watch(audioPlayerProvider);
     
-    return Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHigh.withValues(alpha: 0.8),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: const Border(top: BorderSide(color: Colors.white12, width: 1)),
-        ),
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      elevation: 0,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
+      child: Padding(
         padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 16.0, right: 16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
-                StreamBuilder<bool>(
-                  stream: player.shuffleModeEnabledStream,
-                  builder: (context, snapshot) {
-                    final isShuffle = snapshot.data ?? false;
-                    return IconButton(
-                      icon: const Icon(Icons.shuffle, size: 20),
-                      color: isShuffle ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                      onPressed: () {
-                        player.setShuffleModeEnabled(!isShuffle);
-                        if (!isShuffle) player.shuffle();
-                      },
-                    );
-                  },
-                ),
                 Expanded(
                   child: StreamBuilder<Duration?>(
                     stream: player.positionStream,
@@ -293,28 +278,6 @@ class _MobileViewState extends ConsumerState<MobileView> {
                     },
                   ),
                 ),
-                StreamBuilder<LoopMode>(
-                  stream: player.loopModeStream,
-                  builder: (context, snapshot) {
-                    final loopMode = snapshot.data ?? LoopMode.off;
-                    IconData icon = Icons.repeat;
-                    if (loopMode == LoopMode.one) icon = Icons.repeat_one;
-                    
-                    return IconButton(
-                      icon: Icon(icon, size: 20),
-                      color: loopMode != LoopMode.off ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                      onPressed: () {
-                        if (loopMode == LoopMode.off) {
-                          player.setLoopMode(LoopMode.all);
-                        } else if (loopMode == LoopMode.all) {
-                          player.setLoopMode(LoopMode.one);
-                        } else {
-                          player.setLoopMode(LoopMode.off);
-                        }
-                      },
-                    );
-                  },
-                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -324,6 +287,20 @@ class _MobileViewState extends ConsumerState<MobileView> {
                 IconButton(
                   icon: Icon(Icons.explore, color: _currentView == 1 ? Theme.of(context).colorScheme.primary : null),
                   onPressed: () => _switchView(1),
+                ),
+                StreamBuilder<bool>(
+                  stream: player.shuffleModeEnabledStream,
+                  builder: (context, snapshot) {
+                    final isShuffle = snapshot.data ?? false;
+                    return IconButton(
+                      icon: const Icon(Icons.shuffle, size: 24),
+                      color: isShuffle ? Theme.of(context).colorScheme.primary : null,
+                      onPressed: () {
+                        player.setShuffleModeEnabled(!isShuffle);
+                        if (!isShuffle) player.shuffle();
+                      },
+                    );
+                  },
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -381,14 +358,44 @@ class _MobileViewState extends ConsumerState<MobileView> {
                     ),
                   ],
                 ),
-                IconButton(
-                  icon: Icon(Icons.queue_music, color: _currentView == 0 ? Theme.of(context).colorScheme.primary : null),
-                  onPressed: () => _switchView(0),
+                StreamBuilder<LoopMode>(
+                  stream: player.loopModeStream,
+                  builder: (context, snapshot) {
+                    final loopMode = snapshot.data ?? LoopMode.off;
+                    IconData icon = Icons.repeat;
+                    if (loopMode == LoopMode.one) icon = Icons.repeat_one;
+                    
+                    return IconButton(
+                      icon: Icon(icon, size: 24),
+                      color: loopMode != LoopMode.off ? Theme.of(context).colorScheme.primary : null,
+                      onPressed: () {
+                        if (loopMode == LoopMode.off) {
+                          player.setLoopMode(LoopMode.all);
+                        } else if (loopMode == LoopMode.all) {
+                          player.setLoopMode(LoopMode.one);
+                        } else {
+                          player.setLoopMode(LoopMode.off);
+                        }
+                      },
+                    );
+                  },
+                ),
+                Badge(
+                  label: Text(ref.watch(queueProvider).queue.length.toString()),
+                  isLabelVisible: ref.watch(queueProvider).queue.isNotEmpty,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  textColor: Theme.of(context).colorScheme.onPrimary,
+                  offset: const Offset(4, -4),
+                  child: IconButton(
+                    icon: Icon(Icons.queue_music, color: _currentView == 2 ? Theme.of(context).colorScheme.primary : null),
+                    onPressed: () => _switchView(2),
+                  ),
                 ),
               ],
             ),
           ],
         ),
-      );
+      ),
+    );
   }
 }
