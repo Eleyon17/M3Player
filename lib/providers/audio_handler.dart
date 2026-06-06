@@ -297,7 +297,7 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       title: song.title,
       album: song.album,
       artist: song.artist,
-      artUri: Uri.tryParse(api.getCoverUrl(song.albumId ?? song.id, size: 500)),
+      artUri: Uri.tryParse(kIsWeb ? api.getCoverUrl(song.albumId ?? song.id, size: 500) : ProxyServer.getProxyUrl(api.getCoverUrl(song.albumId ?? song.id, size: 500))),
       duration: Duration(seconds: song.duration),
       extras: song.toJson(),
     );

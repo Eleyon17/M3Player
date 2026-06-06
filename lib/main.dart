@@ -6,6 +6,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:audio_session/audio_session.dart';
 
 import 'api/navidrome_client.dart';
 import 'providers/audio_provider.dart';
@@ -58,6 +59,11 @@ void main() async {
       JustAudioMediaKit.ensureInitialized();
     }
   }
+
+  // Explicitly configure the Android Audio Session to declare this as a Music app
+  // This is often required for Android 11+ to display the Quick Settings media notification.
+  final session = await AudioSession.instance;
+  await session.configure(const AudioSessionConfiguration.music());
 
   final prefs = await SharedPreferences.getInstance();
   final savedUrl = prefs.getString('nd_url');
