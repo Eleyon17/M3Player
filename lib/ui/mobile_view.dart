@@ -241,7 +241,7 @@ class _MobileViewState extends ConsumerState<MobileView> {
       elevation: 0,
       borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
       child: Padding(
-        padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, left: 16.0, right: 16.0),
+        padding: const EdgeInsets.only(top: 8.0, bottom: 24.0, left: 16.0, right: 16.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -320,30 +320,30 @@ class _MobileViewState extends ConsumerState<MobileView> {
                             processingState == ProcessingState.buffering) {
                           return Container(
                             margin: const EdgeInsets.all(8.0),
-                            width: 48.0,
-                            height: 48.0,
+                            width: 40.0,
+                            height: 40.0,
                             child: const CircularProgressIndicator(),
                           );
                         } else if (playing != true) {
                           return BubblyIconButton(
-                            icon: Icons.play_arrow_rounded,
-                            size: 48.0,
+                            icon: Icons.play_circle_outline,
+                            size: 40.0,
                             color: Theme.of(context).colorScheme.primaryContainer,
                             iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             onPressed: player.play,
                           );
                         } else if (processingState != ProcessingState.completed) {
                           return BubblyIconButton(
-                            icon: Icons.pause_rounded,
-                            size: 48.0,
+                            icon: Icons.pause_circle_outline,
+                            size: 40.0,
                             color: Theme.of(context).colorScheme.primaryContainer,
                             iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             onPressed: player.pause,
                           );
                         } else {
                           return BubblyIconButton(
-                            icon: Icons.play_arrow_rounded,
-                            size: 48.0,
+                            icon: Icons.play_circle_outline,
+                            size: 40.0,
                             color: Theme.of(context).colorScheme.primaryContainer,
                             iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             onPressed: () => player.seek(Duration.zero),

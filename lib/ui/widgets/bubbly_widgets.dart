@@ -73,7 +73,7 @@ class _BubblyButtonState extends State<BubblyButton> with SingleTickerProviderSt
           padding: EdgeInsets.all(widget.padding),
           decoration: BoxDecoration(
             color: widget.color ?? Theme.of(context).colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(32),
+            shape: BoxShape.circle,
           ),
           child: widget.child,
         ),

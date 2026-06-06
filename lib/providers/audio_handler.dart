@@ -210,10 +210,19 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         final songs = await api.getStarred();
         return songs.map<MediaItem>((s) => _songToMediaItem(s)).toList();
       }
-      // Assuming playlists are fetched similarly if implemented in navidrome_client.dart, 
-      // but for now we return empty or random if not implemented.
       if (parentMediaId == 'tab_playlists') {
-         return [];
+        final playlists = await api.getPlaylists();
+        return playlists.map<MediaItem>((p) => MediaItem(
+          id: 'playlist_${p['id']}',
+          title: p['name'] ?? 'Unknown Playlist',
+          playable: false,
+        )).toList();
+      }
+      
+      if (parentMediaId.startsWith('playlist_')) {
+        final id = parentMediaId.split('_').last;
+        final songs = await api.getPlaylistSongs(id);
+        return songs.map<MediaItem>((s) => _songToMediaItem(s)).toList();
       }
       
       if (parentMediaId.startsWith('artist_')) {
