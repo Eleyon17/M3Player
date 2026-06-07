@@ -11,6 +11,8 @@ import '../models/song.dart';
 import '../api/navidrome_client.dart';
 import '../main.dart'; // Provides audioHandler
 import 'lyrics_provider.dart';
+import 'package:flutter/foundation.dart';
+import 'package:audio_service/audio_service.dart';
 
 final navidromeClientProvider = Provider<NavidromeClient>((ref) {
   return NavidromeClient();
@@ -79,6 +81,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     Future.microtask(() {
       _listenToPlayer();
       _loadQueue(isInitial: true);
+      _setupAndroidAuto();
       _startPolling();
     });
     return QueueState();
@@ -600,6 +603,24 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     addListToQueue(mixSongs);
   }
 
+  void playQueue(List<Song> songs, {int initialIndex = 0}) {
+    if (songs.isEmpty) return;
+    
+    final currentSong = songs[initialIndex];
+    final history = songs.sublist(0, initialIndex).reversed.toList();
+    final newQueue = songs.sublist(initialIndex + 1);
+    
+    state = state.copyWith(
+      currentSong: currentSong,
+      queue: newQueue,
+      history: history,
+      isShuffle: false,
+    );
+    
+    audioHandler.player.seek(Duration.zero);
+    _triggerDynamicSync();
+  }
+
   void toggleShuffle() {
     final newShuffle = !state.isShuffle;
     if (newShuffle) {
@@ -612,12 +633,8 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
   }
 
   void toggleLoop() {
-    final newMode = state.loopMode == AppLoopMode.off
-        ? AppLoopMode.all
-        : state.loopMode == AppLoopMode.all
-            ? AppLoopMode.one
-            : AppLoopMode.off;
-    state = state.copyWith(loopMode: newMode);
+    final nextMode = AppLoopMode.values[(state.loopMode.index + 1) % AppLoopMode.values.length];
+    state = state.copyWith(loopMode: nextMode);
   }
 
   Future<void> toggleFavorite() async {
@@ -644,5 +661,142 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       queue: newQueue,
       history: newHistory,
     );
+  }
+
+  void _setupAndroidAuto() {
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
+    
+    final api = ref.read(navidromeClientProvider);
+    
+    JustAudioBackground.getChildrenCallback = (parentMediaId) async {
+      try {
+        if (parentMediaId == AudioService.browsableRootId || parentMediaId == 'root') {
+          return [
+            MediaItem(id: 'tab_playlists', title: 'Playlists', playable: false),
+            MediaItem(id: 'tab_albums', title: 'Albums', playable: false),
+            MediaItem(id: 'tab_artists', title: 'Artists', playable: false),
+            MediaItem(id: 'tab_favorites', title: 'Favorites', playable: false),
+          ];
+        }
+        
+        if (parentMediaId == 'tab_playlists') {
+          final playlists = await api.getPlaylists();
+          return playlists.map((p) => MediaItem(id: "playlist_${p['id']}", title: p['name'] ?? 'Unknown', playable: false)).toList();
+        }
+        
+        if (parentMediaId == 'tab_albums') {
+          final albums = await api.getAlbumList(size: 50); // Get recent albums
+          return albums.map((a) => MediaItem(
+            id: "album_${a['id']}", 
+            title: a['name'] ?? 'Unknown', 
+            artist: a['artist'], 
+            artUri: Uri.tryParse(api.getCoverUrl(a['id'], size: 500)),
+            playable: false
+          )).toList();
+        }
+        
+        if (parentMediaId == 'tab_artists') {
+          final artists = await api.getArtists();
+          return artists.map((a) => MediaItem(id: "artist_${a['id']}", title: a['name'] ?? 'Unknown', playable: false)).toList();
+        }
+        
+        if (parentMediaId == 'tab_favorites') {
+          final songs = await api.getStarred();
+          return songs.map((s) => MediaItem(
+            id: "fav_song_${s.id}",
+            title: s.title,
+            album: s.album,
+            artist: s.artist,
+            artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
+            playable: true,
+            extras: s.toJson()
+          )).toList();
+        }
+        
+        if (parentMediaId.startsWith('playlist_')) {
+          final id = parentMediaId.substring(9);
+          final songs = await api.getPlaylistSongs(id);
+          return songs.map((s) => MediaItem(
+            id: "playlist_${id}_song_${s.id}",
+            title: s.title,
+            album: s.album,
+            artist: s.artist,
+            artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
+            playable: true,
+            extras: s.toJson()
+          )).toList();
+        }
+        
+        if (parentMediaId.startsWith('album_')) {
+          final id = parentMediaId.substring(6);
+          final songs = await api.getAlbum(id);
+          return songs.map((s) => MediaItem(
+            id: "album_${id}_song_${s.id}",
+            title: s.title,
+            album: s.album,
+            artist: s.artist,
+            artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
+            playable: true,
+            extras: s.toJson()
+          )).toList();
+        }
+        
+        if (parentMediaId.startsWith('artist_')) {
+          final id = parentMediaId.substring(7);
+          final albums = await api.getArtist(id);
+          return albums.map((a) => MediaItem(
+            id: "album_${a['id']}", 
+            title: a['name'] ?? 'Unknown', 
+            artist: a['artist'], 
+            artUri: Uri.tryParse(api.getCoverUrl(a['id'], size: 500)),
+            playable: false
+          )).toList();
+        }
+      } catch (e) {
+        debugPrint('Error fetching Android Auto children: \$e');
+      }
+      
+      return [];
+    };
+
+    JustAudioBackground.playFromMediaIdCallback = (mediaId) async {
+      try {
+        List<Song> queueToPlay = [];
+        int startIndex = 0;
+        
+        if (mediaId.startsWith('album_')) {
+          final parts = mediaId.split('_song_');
+          final albumId = parts[0].substring(6);
+          final songId = parts.length > 1 ? parts[1] : null;
+          
+          queueToPlay = await api.getAlbum(albumId);
+          if (songId != null) {
+            startIndex = queueToPlay.indexWhere((s) => s.id == songId);
+            if (startIndex == -1) startIndex = 0;
+          }
+        } else if (mediaId.startsWith('playlist_')) {
+          final parts = mediaId.split('_song_');
+          final playlistId = parts[0].substring(9);
+          final songId = parts.length > 1 ? parts[1] : null;
+          
+          queueToPlay = await api.getPlaylistSongs(playlistId);
+          if (songId != null) {
+            startIndex = queueToPlay.indexWhere((s) => s.id == songId);
+            if (startIndex == -1) startIndex = 0;
+          }
+        } else if (mediaId.startsWith('fav_song_')) {
+          final songId = mediaId.substring(9);
+          queueToPlay = await api.getStarred();
+          startIndex = queueToPlay.indexWhere((s) => s.id == songId);
+          if (startIndex == -1) startIndex = 0;
+        }
+        
+        if (queueToPlay.isNotEmpty) {
+          playQueue(queueToPlay, initialIndex: startIndex);
+        }
+      } catch (e) {
+        debugPrint('Error playing from Android Auto mediaId: \$e');
+      }
+    };
   }
 }

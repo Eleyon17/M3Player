@@ -13,8 +13,15 @@ export 'package:audio_service/audio_service.dart' show MediaItem;
 late SwitchAudioHandler _audioHandler;
 late JustAudioPlatform _platform;
 
+typedef GetChildrenCallback = Future<List<MediaItem>> Function(String parentMediaId);
+typedef PlayFromMediaIdCallback = Future<void> Function(String mediaId);
+
 /// Provides the [init] method to initialise just_audio for background playback.
 class JustAudioBackground {
+  static GetChildrenCallback? getChildrenCallback;
+  static PlayFromMediaIdCallback? playFromMediaIdCallback;
+
+  static const String customActionFavorite = 'customActionFavorite';
   static final customEventController = StreamController<String>.broadcast();
   static Stream<String> get customEventStream => customEventController.stream;
 
@@ -421,8 +428,25 @@ class _PlayerAudioHandler extends BaseAudioHandler
                 }
                 mediaItem.add(currentMediaItem!);
               }
+              _broadcastStateIfActive();
             }, onError: (Object e, [StackTrace? st]) {});
       });
+
+  @override
+  Future<List<MediaItem>> getChildren(String parentMediaId, [Map<String, dynamic>? options]) async {
+    if (JustAudioBackground.getChildrenCallback != null) {
+      return await JustAudioBackground.getChildrenCallback!(parentMediaId);
+    }
+    return super.getChildren(parentMediaId, options);
+  }
+
+  @override
+  Future<void> playFromMediaId(String mediaId, [Map<String, dynamic>? extras]) async {
+    if (JustAudioBackground.playFromMediaIdCallback != null) {
+      return await JustAudioBackground.playFromMediaIdCallback!(mediaId);
+    }
+    return super.playFromMediaId(mediaId, extras);
+  }
 
   Future<void> cancelStreamSubscriptions() async {
     final trackInfoSubscription = _trackInfoSubscription;
@@ -791,9 +815,9 @@ class _PlayerAudioHandler extends BaseAudioHandler
         label: 'Favorite',
         action: MediaAction.rewind,
       ),
-      if (hasPrevious) MediaControl.skipToPrevious,
+      MediaControl.skipToPrevious,
       if (_playing) MediaControl.pause else MediaControl.play,
-      if (hasNext) MediaControl.skipToNext,
+      MediaControl.skipToNext,
       const MediaControl(
         androidIcon: 'drawable/ic_stat_shuffle',
         label: 'Shuffle',
