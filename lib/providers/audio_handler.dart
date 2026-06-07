@@ -52,8 +52,8 @@ class MyAudioHandler {
       return;
     }
 
-    int newCurrentIndex = -1;
     final currentTag = _playlist.sequence[currentIndex].tag as MediaItem;
+    int newCurrentIndex = -1;
     for (int i = 0; i < newSongs.length; i++) {
       if (newSongs[i].id == currentTag.id) {
         newCurrentIndex = i;
@@ -66,26 +66,19 @@ class MyAudioHandler {
       return;
     }
 
-    // Remove all items AFTER the current index.
+    // CRITICAL FIX: NEVER remove or insert items at or before `currentIndex`.
+    // Modifying items before the current playing item causes the native currentIndex to shift.
+    // When currentIndex shifts, it triggers our `currentIndexStream` listener, 
+    // which tricks the app into thinking the user pressed "Previous" or "Next" natively!
+    // Since history natively is only ever 1 song (and we don't dynamically edit history anyway), 
+    // we only need to dynamically sync the UPCOMING queue (everything after currentIndex).
+
+    // Remove all upcoming items from the native player
     if (_playlist.length > currentIndex + 1) {
       await _playlist.removeRange(currentIndex + 1, _playlist.length);
     }
-    // Remove all items BEFORE the current index.
-    if (currentIndex > 0) {
-      await _playlist.removeRange(0, currentIndex);
-    }
 
-    // Insert new items that come BEFORE it.
-    if (newCurrentIndex > 0) {
-      final beforeSources = newSongs.sublist(0, newCurrentIndex).map((s) {
-        final rawUrl = api.getStreamUrl(s.id);
-        final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
-        return AudioSource.uri(Uri.parse(proxyUrl), tag: _songToMediaItem(s));
-      }).toList();
-      await _playlist.insertAll(0, beforeSources);
-    }
-
-    // Insert new items that come AFTER it.
+    // Insert the new upcoming items
     if (newCurrentIndex < newSongs.length - 1) {
       final afterSources = newSongs.sublist(newCurrentIndex + 1).map((s) {
         final rawUrl = api.getStreamUrl(s.id);
