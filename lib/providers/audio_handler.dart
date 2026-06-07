@@ -44,6 +44,58 @@ class MyAudioHandler {
     await _playlist.addAll(sources);
   }
 
+  /// Dynamically updates the native queue without interrupting playback
+  Future<void> syncNativeQueue(List<Song> newSongs) async {
+    final currentIndex = player.currentIndex;
+    if (currentIndex == null || currentIndex < 0 || currentIndex >= _playlist.length) {
+      await replaceQueue(newSongs);
+      return;
+    }
+
+    int newCurrentIndex = -1;
+    final currentTag = _playlist.sequence[currentIndex].tag as MediaItem;
+    for (int i = 0; i < newSongs.length; i++) {
+      if (newSongs[i].id == currentTag.id) {
+        newCurrentIndex = i;
+        break;
+      }
+    }
+
+    if (newCurrentIndex == -1) {
+      await replaceQueue(newSongs);
+      return;
+    }
+
+    // Remove all items AFTER the current index.
+    if (_playlist.length > currentIndex + 1) {
+      await _playlist.removeRange(currentIndex + 1, _playlist.length);
+    }
+    // Remove all items BEFORE the current index.
+    if (currentIndex > 0) {
+      await _playlist.removeRange(0, currentIndex);
+    }
+
+    // Insert new items that come BEFORE it.
+    if (newCurrentIndex > 0) {
+      final beforeSources = newSongs.sublist(0, newCurrentIndex).map((s) {
+        final rawUrl = api.getStreamUrl(s.id);
+        final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
+        return AudioSource.uri(Uri.parse(proxyUrl), tag: _songToMediaItem(s));
+      }).toList();
+      await _playlist.insertAll(0, beforeSources);
+    }
+
+    // Insert new items that come AFTER it.
+    if (newCurrentIndex < newSongs.length - 1) {
+      final afterSources = newSongs.sublist(newCurrentIndex + 1).map((s) {
+        final rawUrl = api.getStreamUrl(s.id);
+        final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
+        return AudioSource.uri(Uri.parse(proxyUrl), tag: _songToMediaItem(s));
+      }).toList();
+      await _playlist.addAll(afterSources);
+    }
+  }
+
   Future<void> play() => player.play();
 
   Future<void> pause() => player.pause();

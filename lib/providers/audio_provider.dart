@@ -108,6 +108,22 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     _saveQueue();
   }
 
+  void _triggerDynamicSync() {
+    if (!Platform.isAndroid && !Platform.isIOS) return;
+    _nativeSyncTimer?.cancel();
+    _nativeSyncTimer = Timer(const Duration(milliseconds: 200), () async {
+      if (_isChangingSongInternally || state.currentSong == null) return;
+      
+      final historyItems = state.history.take(1).toList().reversed.toList();
+      final queueItems = state.queue.take(50).toList();
+      final newSongs = <Song>[];
+      newSongs.addAll(historyItems);
+      newSongs.add(state.currentSong!);
+      newSongs.addAll(queueItems);
+      await audioHandler.syncNativeQueue(newSongs);
+    });
+  }
+
   Future<void> _loadQueue({bool isInitial = false}) async {
     try {
       final queueData = await _api.getPlayQueue();
@@ -280,6 +296,8 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     state = state.copyWith(queue: [...state.queue, song]);
     if (state.currentSong == null) {
       next();
+    } else {
+      _triggerDynamicSync();
     }
   }
 
@@ -334,6 +352,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     newQueue.insert(0, song);
     state = state.copyWith(queue: newQueue);
     _preloadLyrics();
+    _triggerDynamicSync();
   }
 
   Future<void> addListToQueue(List<Song> songs) async {
@@ -352,18 +371,21 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       next();
     } else {
       _preloadLyrics();
+      _triggerDynamicSync();
     }
   }
 
   void removeSongIds(List<String> songIdsToRemove) {
     final newQueue = state.queue.where((s) => !songIdsToRemove.contains(s.id)).toList();
     state = state.copyWith(queue: newQueue);
+    _triggerDynamicSync();
   }
 
   void removeSongAt(int index) {
     if (index >= 0 && index < state.queue.length) {
       final newQueue = List<Song>.from(state.queue)..removeAt(index);
       state = state.copyWith(queue: newQueue);
+      _triggerDynamicSync();
     }
   }
 
@@ -463,16 +485,19 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
   Future<void> clearQueue() async {
     if (state.queue.length > 50) {
       state = state.copyWith(queue: []);
+      _triggerDynamicSync();
       return;
     }
     while (state.queue.isNotEmpty) {
       await Future.delayed(const Duration(milliseconds: 20));
       state = state.copyWith(queue: List.from(state.queue)..removeLast());
     }
+    _triggerDynamicSync();
   }
 
   void updateQueue(List<Song> newQueue) {
     state = state.copyWith(queue: newQueue);
+    _triggerDynamicSync();
   }
 
   Future<void> generateInstantMix() async {
@@ -490,6 +515,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     } else {
       state = state.copyWith(isShuffle: newShuffle);
     }
+    _triggerDynamicSync();
   }
 
   void toggleLoop() {
