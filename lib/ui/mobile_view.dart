@@ -205,7 +205,7 @@ class _MobileViewState extends ConsumerState<MobileView> {
             ImageFiltered(
               imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
               child: CachedNetworkImage(
-                imageUrl: api.getCoverUrl(currentSong.coverArt ?? currentSong.id, size: 500),
+                imageUrl: api.getCoverUrl(currentSong.coverArt ?? currentSong.albumId ?? currentSong.id, size: 500),
                 fit: BoxFit.cover,
                 errorWidget: (context, url, error) => Container(color: Theme.of(context).colorScheme.surface),
               ),

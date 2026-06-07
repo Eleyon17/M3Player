@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:palette_generator/palette_generator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../api/navidrome_client.dart';
 import '../models/song.dart';
@@ -80,10 +81,10 @@ class ThemeNotifier extends Notifier<ThemeData> {
 
   Future<void> _updatePalette(Song song) async {
     final api = ref.read(navidromeClientProvider);
-    final url = api.getCoverUrl(song.coverArt ?? song.id, size: 300);
+    final url = api.getCoverUrl(song.coverArt ?? song.albumId ?? song.id, size: 300);
     
     try {
-      final imageProvider = NetworkImage(url);
+      final imageProvider = CachedNetworkImageProvider(url);
       final palette = await PaletteGenerator.fromImageProvider(imageProvider);
       
       // Get all extracted colors sorted by how prominent they are (population)
@@ -125,6 +126,7 @@ class ThemeNotifier extends Notifier<ThemeData> {
       
       state = _buildTheme(scheme);
     } catch (e) {
+      print("Palette extraction failed: $e");
       // Fallback if image loading fails
       state = _buildTheme(null);
     }
