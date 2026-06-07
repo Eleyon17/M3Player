@@ -84,21 +84,6 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     return QueueState();
   }
 
-  void _syncNativeQueueDebounced(QueueState nextState) {
-    if (_isChangingSongInternally) return;
-    _nativeSyncTimer?.cancel();
-    _nativeSyncTimer = Timer(const Duration(milliseconds: 500), () async {
-      if (nextState.currentSong == null) return;
-      final historyItems = nextState.history.take(1).toList().reversed.toList();
-      final queueItems = nextState.queue.take(50).toList();
-      final newSongs = <Song>[];
-      newSongs.addAll(historyItems);
-      newSongs.add(nextState.currentSong!);
-      newSongs.addAll(queueItems);
-      await audioHandler.syncNativeQueue(newSongs);
-    });
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -118,17 +103,9 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
 
   @override
   set state(QueueState value) {
-    final oldState = super.state;
     super.state = value;
     _lastLocalUpdate = DateTime.now();
     _saveQueue();
-    if (Platform.isAndroid || Platform.isIOS) {
-       if (oldState.queue != value.queue || 
-           oldState.history != value.history || 
-           oldState.currentSong != value.currentSong) {
-         _syncNativeQueueDebounced(value);
-       }
-    }
   }
 
   Future<void> _loadQueue({bool isInitial = false}) async {
