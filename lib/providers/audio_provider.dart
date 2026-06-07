@@ -143,8 +143,8 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
             final itemsToPlay = <Song>[];
             int initialIndex = 0;
             if (Platform.isAndroid || Platform.isIOS) {
-              final historyItems = savedHistory.take(15).toList().reversed.toList();
-              final queueItems = savedQueue.take(35).toList();
+              final historyItems = savedHistory.take(1).toList().reversed.toList();
+              final queueItems = savedQueue.take(50).toList();
               itemsToPlay.addAll(historyItems);
               initialIndex = historyItems.length;
               itemsToPlay.add(savedCurrent);
@@ -239,8 +239,8 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       if (Platform.isAndroid || Platform.isIOS) {
         // We pass a subset of the queue to the native OS to avoid memory issues
         // while still giving Android Auto/Wear OS enough context to display a queue.
-        final historyItems = state.history.take(15).toList().reversed.toList();
-        final queueItems = state.queue.take(35).toList();
+        final historyItems = state.history.take(1).toList().reversed.toList();
+        final queueItems = state.queue.take(50).toList();
         
         itemsToPlay.addAll(historyItems);
         initialIndex = historyItems.length;
