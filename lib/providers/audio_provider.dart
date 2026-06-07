@@ -141,14 +141,17 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
           state = state.copyWith(currentSong: savedCurrent, queue: savedQueue, history: savedHistory);
           if (savedCurrent != null && isInitial) {
             final itemsToPlay = <Song>[];
+            int initialIndex = 0;
             if (Platform.isAndroid || Platform.isIOS) {
-              if (savedHistory.isNotEmpty) itemsToPlay.add(savedHistory.first);
+              final historyItems = savedHistory.take(15).toList().reversed.toList();
+              final queueItems = savedQueue.take(35).toList();
+              itemsToPlay.addAll(historyItems);
+              initialIndex = historyItems.length;
               itemsToPlay.add(savedCurrent);
-              if (savedQueue.isNotEmpty) itemsToPlay.add(savedQueue.first);
+              itemsToPlay.addAll(queueItems);
             } else {
               itemsToPlay.add(savedCurrent);
             }
-            final initialIndex = (Platform.isAndroid || Platform.isIOS) && savedHistory.isNotEmpty ? 1 : 0;
             audioHandler.replaceQueue(itemsToPlay, initialIndex: initialIndex);
             
             final position = queueData['position'] as int?;
@@ -234,17 +237,16 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       final itemsToPlay = <Song>[];
       
       if (Platform.isAndroid || Platform.isIOS) {
-        // 1. Previous Track
-        if (state.history.isNotEmpty) {
-          itemsToPlay.add(state.history.first);
-          initialIndex = 1;
-        }
-        // 2. Current Track
+        // We pass a subset of the queue to the native OS to avoid memory issues
+        // while still giving Android Auto/Wear OS enough context to display a queue.
+        final historyItems = state.history.take(15).toList().reversed.toList();
+        final queueItems = state.queue.take(35).toList();
+        
+        itemsToPlay.addAll(historyItems);
+        initialIndex = historyItems.length;
+        
         itemsToPlay.add(song);
-        // 3. Next Track
-        if (state.queue.isNotEmpty) {
-          itemsToPlay.add(state.queue.first);
-        }
+        itemsToPlay.addAll(queueItems);
       } else {
         // Desktop/Web
         itemsToPlay.add(song);
