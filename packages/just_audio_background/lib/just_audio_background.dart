@@ -15,6 +15,9 @@ late JustAudioPlatform _platform;
 
 /// Provides the [init] method to initialise just_audio for background playback.
 class JustAudioBackground {
+  static final customEventController = StreamController<String>.broadcast();
+  static Stream<String> get customEventStream => customEventController.stream;
+
   /// Initialise just_audio for background playback. This should be called from
   /// your app's `main` method. e.g.:
   ///
@@ -676,16 +679,13 @@ class _PlayerAudioHandler extends BaseAudioHandler
   @override
   Future<void> fastForward() async {
     // Hijacked for Shuffle!
-    final newMode = _shuffleMode == AudioServiceShuffleMode.none 
-        ? AudioServiceShuffleMode.all 
-        : AudioServiceShuffleMode.none;
-    await setShuffleMode(newMode);
+    JustAudioBackground.customEventController.add('action_shuffle');
   }
 
   @override
   Future<void> rewind() async {
     // Hijacked for Favorite!
-    customEvent.add('action_favorite');
+    JustAudioBackground.customEventController.add('action_favorite');
   }
 
   @override

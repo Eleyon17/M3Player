@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import '../models/song.dart';
 import '../api/navidrome_client.dart';
 import '../main.dart'; // Provides audioHandler
@@ -194,6 +195,14 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
         next();
+      }
+    });
+
+    JustAudioBackground.customEventStream.listen((event) {
+      if (event == 'action_favorite') {
+        toggleFavorite();
+      } else if (event == 'action_shuffle') {
+        toggleShuffle();
       }
     });
 
