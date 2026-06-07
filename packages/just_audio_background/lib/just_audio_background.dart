@@ -674,11 +674,19 @@ class _PlayerAudioHandler extends BaseAudioHandler
   }
 
   @override
-  Future<void> fastForward() =>
-      _seekRelative(AudioService.config.fastForwardInterval);
+  Future<void> fastForward() async {
+    // Hijacked for Shuffle!
+    final newMode = _shuffleMode == AudioServiceShuffleMode.none 
+        ? AudioServiceShuffleMode.all 
+        : AudioServiceShuffleMode.none;
+    await setShuffleMode(newMode);
+  }
 
   @override
-  Future<void> rewind() => _seekRelative(-AudioService.config.rewindInterval);
+  Future<void> rewind() async {
+    // Hijacked for Favorite!
+    customEvent.add('action_favorite');
+  }
 
   @override
   Future<void> seekForward(bool begin) async => _seekContinuously(begin, 1);
@@ -783,8 +791,7 @@ class _PlayerAudioHandler extends BaseAudioHandler
       const MediaControl(
         androidIcon: 'drawable/ic_stat_favorite',
         label: 'Favorite',
-        action: MediaAction.custom,
-        customAction: CustomMediaAction(name: 'action_favorite'),
+        action: MediaAction.rewind,
       ),
       if (hasPrevious) MediaControl.skipToPrevious,
       if (_playing) MediaControl.pause else MediaControl.play,
@@ -792,8 +799,7 @@ class _PlayerAudioHandler extends BaseAudioHandler
       const MediaControl(
         androidIcon: 'drawable/ic_stat_shuffle',
         label: 'Shuffle',
-        action: MediaAction.custom,
-        customAction: CustomMediaAction(name: 'action_shuffle'),
+        action: MediaAction.fastForward,
       ),
     ];
     playbackState.add(playbackState.nvalue!.copyWith(
@@ -802,9 +808,11 @@ class _PlayerAudioHandler extends BaseAudioHandler
         MediaAction.seek,
         MediaAction.seekForward,
         MediaAction.seekBackward,
+        MediaAction.rewind,
+        MediaAction.fastForward,
       },
       androidCompactActionIndices: List.generate(controls.length, (i) => i)
-          .where((i) => controls[i].action != MediaAction.custom)
+          .where((i) => controls[i].action != MediaAction.rewind && controls[i].action != MediaAction.fastForward)
           .toList(),
       processingState: _justAudioEvent.errorCode != null
           ? AudioProcessingState.error
