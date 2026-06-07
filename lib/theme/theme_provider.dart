@@ -86,21 +86,18 @@ class ThemeNotifier extends Notifier<ThemeData> {
       final imageProvider = NetworkImage(url);
       final palette = await PaletteGenerator.fromImageProvider(imageProvider);
       
-      final baseColor = palette.vibrantColor?.color ?? palette.dominantColor?.color ?? const Color(0xFF8C6DB4);
-      final hsl = HSLColor.fromColor(baseColor);
-      final h = hsl.hue;
-      final s = hsl.saturation;
+      // WearOS natively tints its media controls using the Dominant color of the album art
+      // (the background color), NOT the highly chromatic Material You seed color.
+      // By explicitly grabbing the dominant color, we synchronize perfectly with WearOS.
+      final baseColor = palette.dominantColor?.color ?? palette.mutedColor?.color ?? const Color(0xFF8C6DB4);
       
       ColorScheme scheme;
-      
       if (isDarkMode) {
         scheme = ColorScheme.fromSeed(
           seedColor: baseColor,
           brightness: Brightness.dark,
         );
       } else {
-        // Material 3 design calls for much more neutral backgrounds in light mode.
-        // We use fromSeed to guarantee perfectly balanced, low-chroma tonal palettes.
         scheme = ColorScheme.fromSeed(
           seedColor: baseColor,
           brightness: Brightness.light,
