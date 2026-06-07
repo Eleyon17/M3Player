@@ -13,13 +13,16 @@ export 'package:audio_service/audio_service.dart' show MediaItem;
 late SwitchAudioHandler _audioHandler;
 late JustAudioPlatform _platform;
 
-typedef GetChildrenCallback = Future<List<MediaItem>> Function(String parentMediaId);
+typedef GetChildrenCallback = Future<List<MediaItem>> Function(
+    String parentMediaId);
 typedef PlayFromMediaIdCallback = Future<void> Function(String mediaId);
+typedef SkipToQueueItemCallback = Future<void> Function(int index);
 
 /// Provides the [init] method to initialise just_audio for background playback.
 class JustAudioBackground {
   static GetChildrenCallback? getChildrenCallback;
   static PlayFromMediaIdCallback? playFromMediaIdCallback;
+  static SkipToQueueItemCallback? skipToQueueItemCallback;
 
   static const String customActionFavorite = 'customActionFavorite';
   static final customEventController = StreamController<String>.broadcast();
@@ -433,7 +436,8 @@ class _PlayerAudioHandler extends BaseAudioHandler
       });
 
   @override
-  Future<List<MediaItem>> getChildren(String parentMediaId, [Map<String, dynamic>? options]) async {
+  Future<List<MediaItem>> getChildren(String parentMediaId,
+      [Map<String, dynamic>? options]) async {
     if (JustAudioBackground.getChildrenCallback != null) {
       return await JustAudioBackground.getChildrenCallback!(parentMediaId);
     }
@@ -441,7 +445,8 @@ class _PlayerAudioHandler extends BaseAudioHandler
   }
 
   @override
-  Future<void> playFromMediaId(String mediaId, [Map<String, dynamic>? extras]) async {
+  Future<void> playFromMediaId(String mediaId,
+      [Map<String, dynamic>? extras]) async {
     if (JustAudioBackground.playFromMediaIdCallback != null) {
       return await JustAudioBackground.playFromMediaIdCallback!(mediaId);
     }
@@ -645,20 +650,29 @@ class _PlayerAudioHandler extends BaseAudioHandler
 
   @override
   Future<void> skipToQueueItem(int index) async {
-    (await _player).seek(SeekRequest(position: Duration.zero, index: index));
+    if (JustAudioBackground.skipToQueueItemCallback != null) {
+      await JustAudioBackground.skipToQueueItemCallback!(index);
+    }
+    if (index < 0 || index >= queue.value.length) return;
+    await (await _player)
+        .seek(SeekRequest(position: Duration.zero, index: index));
   }
 
   @override
   Future<void> skipToNext() async {
     if (hasNext) {
-      await skipToQueueItem(nextIndex!);
+      await (await _player)
+          .seek(SeekRequest(position: Duration.zero, index: nextIndex!));
     }
   }
 
   @override
   Future<void> skipToPrevious() async {
     if (hasPrevious) {
-      await skipToQueueItem(previousIndex!);
+      (await _player)
+          .seek(SeekRequest(position: Duration.zero, index: previousIndex!));
+    } else {
+      (await _player).seek(SeekRequest(position: Duration.zero, index: 0));
     }
   }
 
@@ -740,8 +754,8 @@ class _PlayerAudioHandler extends BaseAudioHandler
   @override
   Future<void> customAction(String name, [Map<String, dynamic>? extras]) async {
     if (name == 'action_shuffle') {
-      final newMode = _shuffleMode == AudioServiceShuffleMode.none 
-          ? AudioServiceShuffleMode.all 
+      final newMode = _shuffleMode == AudioServiceShuffleMode.none
+          ? AudioServiceShuffleMode.all
           : AudioServiceShuffleMode.none;
       await setShuffleMode(newMode);
     } else if (name == 'action_favorite') {
@@ -834,7 +848,9 @@ class _PlayerAudioHandler extends BaseAudioHandler
         MediaAction.fastForward,
       },
       androidCompactActionIndices: List.generate(controls.length, (i) => i)
-          .where((i) => controls[i].action != MediaAction.rewind && controls[i].action != MediaAction.fastForward)
+          .where((i) =>
+              controls[i].action != MediaAction.rewind &&
+              controls[i].action != MediaAction.fastForward)
           .toList(),
       processingState: _justAudioEvent.errorCode != null
           ? AudioProcessingState.error

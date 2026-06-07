@@ -283,27 +283,61 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     if (count > newQueue.length) count = newQueue.length;
     if (count == 0) return;
     
-    final targetIndex = count - 1;
-    final targetSong = newQueue[targetIndex];
-    
-    // YANK BEHAVIOR:
-    // If count > 1 (meaning the user tapped a specific song from the native queue list),
-    // we pull that song out and leave the intermediate songs in the queue!
-    // If count == 1 (rapid native skipping), this behaves identically to standard popping.
-    newQueue.removeAt(targetIndex);
-    
-    if (newCurrent != null) {
-      newHistory.insert(0, newCurrent);
-      _api.scrobble(newCurrent.id, submission: true);
+    // STANDARD POPPING BEHAVIOR:
+    // If user skips forward natively (e.g. via Next button), all skipped songs are pushed to history.
+    for (int i = 0; i < count; i++) {
+      if (newQueue.isEmpty) break;
+      if (newCurrent != null) {
+        newHistory.insert(0, newCurrent);
+        _api.scrobble(newCurrent.id, submission: true);
+      }
+      newCurrent = newQueue.removeAt(0);
     }
-    if (newHistory.length > 50) newHistory.removeLast();
     
-    newCurrent = targetSong;
+    if (newHistory.length > 50) {
+      newHistory = newHistory.sublist(0, 50);
+    }
     
     state = state.copyWith(queue: newQueue, history: newHistory, currentSong: newCurrent);
-    _api.scrobble(newCurrent.id, submission: false); // Report now playing
+    _api.scrobble(newCurrent!.id, submission: false); // Report now playing
     _preloadLyrics();
     _triggerDynamicSync(); // Silently updates upcoming queue and truncates native history without interrupting playback
+  }
+
+  void nativeYankItem(String mediaId) {
+    if (state.currentSong?.id == mediaId) return;
+    
+    var newQueue = List<Song>.from(state.queue);
+    var newHistory = List<Song>.from(state.history);
+    Song? newCurrent = state.currentSong;
+    
+    final queueIndex = newQueue.indexWhere((s) => s.id == mediaId);
+    if (queueIndex != -1) {
+      final targetSong = newQueue[queueIndex];
+      newQueue.removeAt(queueIndex);
+      
+      if (newCurrent != null) {
+        newHistory.insert(0, newCurrent);
+        _api.scrobble(newCurrent.id, submission: true);
+      }
+      if (newHistory.length > 50) newHistory.removeLast();
+      newCurrent = targetSong;
+    } else {
+      final historyIndex = newHistory.indexWhere((s) => s.id == mediaId);
+      if (historyIndex != -1) {
+        final targetSong = newHistory[historyIndex];
+        newHistory.removeAt(historyIndex);
+        if (newCurrent != null) {
+          newQueue.insert(0, newCurrent);
+        }
+        newCurrent = targetSong;
+      }
+    }
+    
+    state = state.copyWith(queue: newQueue, history: newHistory, currentSong: newCurrent);
+    _api.scrobble(newCurrent!.id, submission: false);
+    _preloadLyrics();
+    _triggerDynamicSync();
   }
 
   void nativeSkipBackward(int count) {
@@ -667,6 +701,18 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
     
     final api = ref.read(navidromeClientProvider);
+
+    JustAudioBackground.skipToQueueItemCallback = (index) async {
+      try {
+        final sequence = audioHandler.player.sequence;
+        if (sequence == null || index < 0 || index >= sequence.length) return;
+        final mediaItem = sequence[index].tag as MediaItem;
+        // Yank the item so intermediate songs aren't lost
+        nativeYankItem(mediaItem.id);
+      } catch (e) {
+        debugPrint('Error handling skipToQueueItemCallback: $e');
+      }
+    };
     
     JustAudioBackground.getChildrenCallback = (parentMediaId) async {
       try {
