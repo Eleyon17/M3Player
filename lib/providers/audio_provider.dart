@@ -277,18 +277,28 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     var newHistory = List<Song>.from(state.history);
     Song? newCurrent = state.currentSong;
     
-    for (int i = 0; i < count; i++) {
-      if (newQueue.isEmpty) break; // Reached the end natively
-      if (newCurrent != null) {
-        newHistory.insert(0, newCurrent);
-        _api.scrobble(newCurrent.id, submission: true);
-      }
-      if (newHistory.length > 50) newHistory.removeLast();
-      newCurrent = newQueue.removeAt(0);
+    if (count > newQueue.length) count = newQueue.length;
+    if (count == 0) return;
+    
+    final targetIndex = count - 1;
+    final targetSong = newQueue[targetIndex];
+    
+    // YANK BEHAVIOR:
+    // If count > 1 (meaning the user tapped a specific song from the native queue list),
+    // we pull that song out and leave the intermediate songs in the queue!
+    // If count == 1 (rapid native skipping), this behaves identically to standard popping.
+    newQueue.removeAt(targetIndex);
+    
+    if (newCurrent != null) {
+      newHistory.insert(0, newCurrent);
+      _api.scrobble(newCurrent.id, submission: true);
     }
+    if (newHistory.length > 50) newHistory.removeLast();
+    
+    newCurrent = targetSong;
     
     state = state.copyWith(queue: newQueue, history: newHistory, currentSong: newCurrent);
-    _api.scrobble(newCurrent?.id ?? '', submission: false); // Report now playing
+    _api.scrobble(newCurrent.id, submission: false); // Report now playing
     _preloadLyrics();
     _triggerDynamicSync(); // Silently updates upcoming queue and truncates native history without interrupting playback
   }
