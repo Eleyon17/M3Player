@@ -227,21 +227,46 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     });
 
     // Note: just_audio automatically transitions to the next song in a ConcatenatingAudioSource
-    // when a track completes. We intercept this via the index change (Mobile only).
+    // when a track completes. We intercept this via the index change.
+    // The native audio player is the ABSOLUTE TRUTH. If it changes to a new song,
+    // the Flutter app MUST adjust its queue and history to match.
     _player.currentIndexStream.listen((index) {
       if (!Platform.isAndroid && !Platform.isIOS) return;
-      if (_isChangingSongInternally || index == null) return;
+      if (index == null) return;
       
-      final hasPrev = state.history.isNotEmpty;
-      final expectedCurrentIndex = hasPrev ? 1 : 0;
+      final sequenceState = _player.sequenceState;
+      if (sequenceState == null || sequenceState.sequence.isEmpty) return;
+      if (index < 0 || index >= sequenceState.sequence.length) return;
       
-      if (index > expectedCurrentIndex) {
-        final skipCount = index - expectedCurrentIndex;
+      final currentSource = sequenceState.sequence[index];
+      final mediaItem = currentSource.tag as MediaItem?;
+      if (mediaItem == null) return;
+      
+      final nativePlayingId = mediaItem.id;
+      
+      // If the native player is playing what we expect, we're perfectly in sync!
+      if (state.currentSong?.id == nativePlayingId) return;
+      
+      // Otherwise, the native player has autonomously transitioned (or skipped).
+      // Find where this new song is in our upcoming queue:
+      final queueIndex = state.queue.indexWhere((s) => s.id == nativePlayingId);
+      if (queueIndex != -1) {
+        // Native player skipped forward!
+        final skipCount = queueIndex + 1;
         nativeSkipForward(skipCount);
-      } else if (index < expectedCurrentIndex) {
-        final skipCount = expectedCurrentIndex - index;
-        nativeSkipBackward(skipCount);
+        return;
       }
+      
+      // If not in queue, check history (user skipped backward natively):
+      final historyIndex = state.history.indexWhere((s) => s.id == nativePlayingId);
+      if (historyIndex != -1) {
+        final skipCount = historyIndex + 1;
+        nativeSkipBackward(skipCount);
+        return;
+      }
+      
+      // If it's in neither, we are totally out of sync or a full queue replacement is occurring.
+      // `playSong` will handle rebuilding the entire state.
     });
   }
 
