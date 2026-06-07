@@ -97,17 +97,6 @@ class ThemeNotifier extends Notifier<ThemeData> {
         scheme = ColorScheme.fromSeed(
           seedColor: baseColor,
           brightness: Brightness.dark,
-        ).copyWith(
-          background: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.10).toColor(),
-          surface: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.12).toColor(),
-          surfaceContainerHighest: HSLColor.fromAHSL(1.0, h, (s - 0.15).clamp(0.0, 1.0), 0.20).toColor(),
-          secondaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.20).clamp(0.0, 1.0), 0.25).toColor(),
-          primary: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
-          primaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.75).toColor(),
-          onPrimaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.10).clamp(0.0, 1.0), 0.15).toColor(),
-          onBackground: HSLColor.fromAHSL(1.0, h, s, 0.90).toColor(),
-          onSurfaceVariant: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
-          onSecondaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.85).toColor(),
         );
       } else {
         // Material 3 design calls for much more neutral backgrounds in light mode.
