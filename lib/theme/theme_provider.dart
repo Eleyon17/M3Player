@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:palette_generator/palette_generator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -83,11 +84,44 @@ class ThemeNotifier extends Notifier<ThemeData> {
     
     try {
       final imageProvider = NetworkImage(url);
+      final palette = await PaletteGenerator.fromImageProvider(imageProvider);
       
-      final ColorScheme scheme = await ColorScheme.fromImageProvider(
-        provider: imageProvider,
-        brightness: isDarkMode ? Brightness.dark : Brightness.light,
-      );
+      // Get all extracted colors sorted by how prominent they are (population)
+      final colors = palette.paletteColors.toList()
+        ..sort((a, b) => b.population.compareTo(a.population));
+        
+      // Take up to the top 3 most prominent colors
+      final topColors = colors.take(3).map((p) => p.color).toList();
+      
+      // Average them out
+      Color baseColor = const Color(0xFF8C6DB4);
+      if (topColors.isNotEmpty) {
+        int r = 0, g = 0, b = 0;
+        for (var c in topColors) {
+          r += c.red;
+          g += c.green;
+          b += c.blue;
+        }
+        baseColor = Color.fromARGB(
+          255,
+          (r / topColors.length).round(),
+          (g / topColors.length).round(),
+          (b / topColors.length).round(),
+        );
+      }
+      
+      ColorScheme scheme;
+      if (isDarkMode) {
+        scheme = ColorScheme.fromSeed(
+          seedColor: baseColor,
+          brightness: Brightness.dark,
+        );
+      } else {
+        scheme = ColorScheme.fromSeed(
+          seedColor: baseColor,
+          brightness: Brightness.light,
+        );
+      }
       
       state = _buildTheme(scheme);
     } catch (e) {
