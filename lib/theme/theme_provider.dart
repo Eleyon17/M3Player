@@ -81,7 +81,7 @@ class ThemeNotifier extends Notifier<ThemeData> {
 
   Future<void> _updatePalette(Song song) async {
     final api = ref.read(navidromeClientProvider);
-    final url = api.getCoverUrl(song.coverArt ?? song.albumId ?? song.id, size: 300);
+    final url = api.getCoverUrl(song.coverArt ?? song.albumId ?? song.id, size: 500);
     
     try {
       final imageProvider = CachedNetworkImageProvider(url);

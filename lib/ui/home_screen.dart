@@ -85,7 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   duration: const Duration(milliseconds: 800),
                   child: CachedNetworkImage(
                     key: ValueKey(currentSong.id),
-                    imageUrl: api.getCoverUrl(currentSong.coverArt ?? currentSong.albumId ?? currentSong.id, size: 200),
+                    imageUrl: api.getCoverUrl(currentSong.coverArt ?? currentSong.albumId ?? currentSong.id, size: 500),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,
