@@ -62,6 +62,8 @@ class QueueState {
 
 class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
   Timer? _pollTimer;
+  Timer? _saveTimer;
+  Timer? _nativeSyncTimer;
   DateTime _lastLocalUpdate = DateTime.now();
 
   @override
@@ -71,6 +73,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       WidgetsBinding.instance.removeObserver(this);
       _pollTimer?.cancel();
       _saveTimer?.cancel();
+      _nativeSyncTimer?.cancel();
     });
     
     Future.microtask(() {
@@ -79,6 +82,21 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       _startPolling();
     });
     return QueueState();
+  }
+
+  void _syncNativeQueueDebounced(QueueState nextState) {
+    if (_isChangingSongInternally) return;
+    _nativeSyncTimer?.cancel();
+    _nativeSyncTimer = Timer(const Duration(milliseconds: 500), () async {
+      if (nextState.currentSong == null) return;
+      final historyItems = nextState.history.take(1).toList().reversed.toList();
+      final queueItems = nextState.queue.take(50).toList();
+      final newSongs = <Song>[];
+      newSongs.addAll(historyItems);
+      newSongs.add(nextState.currentSong!);
+      newSongs.addAll(queueItems);
+      await audioHandler.syncNativeQueue(newSongs);
+    });
   }
 
   @override
@@ -100,12 +118,18 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
 
   @override
   set state(QueueState value) {
+    final oldState = super.state;
     super.state = value;
     _lastLocalUpdate = DateTime.now();
     _saveQueue();
+    if (Platform.isAndroid || Platform.isIOS) {
+       if (oldState.queue != value.queue || 
+           oldState.history != value.history || 
+           oldState.currentSong != value.currentSong) {
+         _syncNativeQueueDebounced(value);
+       }
+    }
   }
-
-  Timer? _saveTimer;
 
   Future<void> _loadQueue({bool isInitial = false}) async {
     try {
