@@ -214,7 +214,7 @@ class _MobileViewState extends ConsumerState<MobileView> {
             Container(color: Theme.of(context).colorScheme.surface),
             
           Container(
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+            color: Color.lerp(Theme.of(context).colorScheme.surface, Theme.of(context).colorScheme.primaryContainer, 0.4)?.withValues(alpha: 0.85),
             child: SafeArea(
                 bottom: false,
                 child: Column(

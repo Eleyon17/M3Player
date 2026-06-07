@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:palette_generator/palette_generator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -84,25 +83,11 @@ class ThemeNotifier extends Notifier<ThemeData> {
     
     try {
       final imageProvider = NetworkImage(url);
-      final palette = await PaletteGenerator.fromImageProvider(imageProvider);
       
-      // WearOS natively tints its media controls using the Dominant color of the album art
-      // (the background color), NOT the highly chromatic Material You seed color.
-      // By explicitly grabbing the dominant color, we synchronize perfectly with WearOS.
-      final baseColor = palette.dominantColor?.color ?? palette.mutedColor?.color ?? const Color(0xFF8C6DB4);
-      
-      ColorScheme scheme;
-      if (isDarkMode) {
-        scheme = ColorScheme.fromSeed(
-          seedColor: baseColor,
-          brightness: Brightness.dark,
-        );
-      } else {
-        scheme = ColorScheme.fromSeed(
-          seedColor: baseColor,
-          brightness: Brightness.light,
-        );
-      }
+      final ColorScheme scheme = await ColorScheme.fromImageProvider(
+        provider: imageProvider,
+        brightness: isDarkMode ? Brightness.dark : Brightness.light,
+      );
       
       state = _buildTheme(scheme);
     } catch (e) {
