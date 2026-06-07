@@ -73,9 +73,24 @@ class MyAudioHandler {
     // Since history natively is only ever 1 song (and we don't dynamically edit history anyway), 
     // we only need to dynamically sync the UPCOMING queue (everything after currentIndex).
 
+    // Safely truncate history: Android Auto has memory limits. 
+    // If the native currentIndex is > 1, it means old songs are accumulating in the native history.
+    // We remove (0, currentIndex - 1) so exactly 1 previous song remains.
+    // Note: Our Flutter app suppresses the `currentIndexStream` listener during dynamic syncs, 
+    // so this visual index shift won't falsely trigger a "Previous" skip!
+    if (currentIndex > 1) {
+      await _playlist.removeRange(0, currentIndex - 1);
+      // Wait! If we just removed items BEFORE currentIndex, the current index physically shifted!
+      // This means we must NOT use the old `currentIndex` variable for calculating the upcoming removals below!
+      // We need to re-fetch the new current index (or just recalculate it).
+      // If we removed `currentIndex - 1` items, the new index is 1.
+    }
+    
+    final updatedIndex = player.currentIndex ?? 1;
+
     // Remove all upcoming items from the native player
-    if (_playlist.length > currentIndex + 1) {
-      await _playlist.removeRange(currentIndex + 1, _playlist.length);
+    if (_playlist.length > updatedIndex + 1) {
+      await _playlist.removeRange(updatedIndex + 1, _playlist.length);
     }
 
     // Insert the new upcoming items

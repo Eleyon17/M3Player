@@ -114,13 +114,20 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     _nativeSyncTimer = Timer(const Duration(milliseconds: 200), () async {
       if (_isChangingSongInternally || state.currentSong == null) return;
       
-      final historyItems = state.history.take(1).toList().reversed.toList();
-      final queueItems = state.queue.take(50).toList();
-      final newSongs = <Song>[];
-      newSongs.addAll(historyItems);
-      newSongs.add(state.currentSong!);
-      newSongs.addAll(queueItems);
-      await audioHandler.syncNativeQueue(newSongs);
+      _isChangingSongInternally = true;
+      try {
+        final historyItems = state.history.take(1).toList().reversed.toList();
+        final queueItems = state.queue.take(50).toList();
+        final newSongs = <Song>[];
+        newSongs.addAll(historyItems);
+        newSongs.add(state.currentSong!);
+        newSongs.addAll(queueItems);
+        await audioHandler.syncNativeQueue(newSongs);
+      } finally {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          _isChangingSongInternally = false;
+        });
+      }
     });
   }
 
@@ -236,13 +243,57 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       final expectedCurrentIndex = hasPrev ? 1 : 0;
       
       if (index > expectedCurrentIndex) {
-        // User pressed skip next OR the track finished normally
-        next();
+        final skipCount = index - expectedCurrentIndex;
+        nativeSkipForward(skipCount);
       } else if (index < expectedCurrentIndex) {
-        // User pressed skip previous
-        previous();
+        final skipCount = expectedCurrentIndex - index;
+        nativeSkipBackward(skipCount);
       }
     });
+  }
+
+  void nativeSkipForward(int count) {
+    if (count <= 0) return;
+    
+    var newQueue = List<Song>.from(state.queue);
+    var newHistory = List<Song>.from(state.history);
+    Song? newCurrent = state.currentSong;
+    
+    for (int i = 0; i < count; i++) {
+      if (newQueue.isEmpty) break; // Reached the end natively
+      if (newCurrent != null) {
+        newHistory.insert(0, newCurrent);
+        _api.scrobble(newCurrent.id, submission: true);
+      }
+      if (newHistory.length > 50) newHistory.removeLast();
+      newCurrent = newQueue.removeAt(0);
+    }
+    
+    state = state.copyWith(queue: newQueue, history: newHistory, currentSong: newCurrent);
+    _api.scrobble(newCurrent?.id ?? '', submission: false); // Report now playing
+    _preloadLyrics();
+    _triggerDynamicSync(); // Silently updates upcoming queue and truncates native history without interrupting playback
+  }
+
+  void nativeSkipBackward(int count) {
+    if (count <= 0) return;
+    
+    var newQueue = List<Song>.from(state.queue);
+    var newHistory = List<Song>.from(state.history);
+    Song? newCurrent = state.currentSong;
+    
+    for (int i = 0; i < count; i++) {
+      if (newHistory.isEmpty) break;
+      if (newCurrent != null) {
+        newQueue.insert(0, newCurrent);
+      }
+      newCurrent = newHistory.removeAt(0);
+    }
+    
+    state = state.copyWith(queue: newQueue, history: newHistory, currentSong: newCurrent);
+    _api.scrobble(newCurrent?.id ?? '', submission: false); // Report now playing
+    _preloadLyrics();
+    _triggerDynamicSync(); // Silently updates upcoming queue without interrupting playback
   }
 
   Future<void> playSong(Song song) async {
