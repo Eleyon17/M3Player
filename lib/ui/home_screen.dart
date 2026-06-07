@@ -12,6 +12,7 @@ import 'now_playing_panel.dart';
 import 'bottom_controls.dart';
 import 'mobile_view.dart';
 import 'lyrics_panel.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 final showLyricsProvider = NotifierProvider<ShowLyricsNotifier, bool>(ShowLyricsNotifier.new);
 
@@ -43,6 +44,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool get isMobile {
     if (kIsWeb) return false;
     return Platform.isIOS || Platform.isAndroid;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (Platform.isAndroid && !kIsWeb) {
+      Permission.notification.request();
+    }
   }
 
   @override

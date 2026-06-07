@@ -49,7 +49,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   if (Platform.isAndroid) {
-    await Permission.notification.request();
+    // We purposefully do NOT await Permission.notification.request() here.
+    // If Android Auto wakes the app up in the background, there is no UI context,
+    // and requesting permissions blocks the isolate forever, breaking Android Auto.
+    // Permissions should be requested in the foreground UI instead (e.g. LoginScreen/HomeScreen).
   }
   
   if (!kIsWeb) {
