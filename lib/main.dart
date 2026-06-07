@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 import 'api/navidrome_client.dart';
 import 'providers/audio_provider.dart';
@@ -60,6 +61,15 @@ void main() async {
     }
   }
 
+  if (!kIsWeb) {
+    await JustAudioBackground.init(
+      androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
+      androidNotificationChannelName: 'M3Player Audio',
+      androidNotificationOngoing: true,
+      androidStopForegroundOnPause: true,
+    );
+  }
+
   // Explicitly configure the Android Audio Session to declare this as a Music app
   // This is often required for Android 11+ to display the Quick Settings media notification.
   final session = await AudioSession.instance;
@@ -75,16 +85,7 @@ void main() async {
     navidromeClient.configure(savedUrl, savedUser, savedPass);
   }
 
-  audioHandler = await AudioService.init(
-    builder: () => MyAudioHandler(AudioPlayer(), navidromeClient),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.m3player.app.audio.channel.v2',
-      androidNotificationChannelName: 'M3Player Audio',
-      androidNotificationOngoing: true,
-      androidStopForegroundOnPause: true,
-      androidNotificationIcon: 'mipmap/ic_launcher',
-    ),
-  );
+  audioHandler = MyAudioHandler(AudioPlayer(), navidromeClient);
 
 
 
