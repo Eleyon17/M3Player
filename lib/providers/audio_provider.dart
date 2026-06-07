@@ -114,20 +114,13 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     _nativeSyncTimer = Timer(const Duration(milliseconds: 200), () async {
       if (_isChangingSongInternally || state.currentSong == null) return;
       
-      _isChangingSongInternally = true;
-      try {
-        final historyItems = state.history.take(1).toList().reversed.toList();
-        final queueItems = state.queue.take(50).toList();
-        final newSongs = <Song>[];
-        newSongs.addAll(historyItems);
-        newSongs.add(state.currentSong!);
-        newSongs.addAll(queueItems);
-        await audioHandler.syncNativeQueue(newSongs);
-      } finally {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          _isChangingSongInternally = false;
-        });
-      }
+      final historyItems = state.history.take(1).toList().reversed.toList();
+      final queueItems = state.queue.take(50).toList();
+      final newSongs = <Song>[];
+      newSongs.addAll(historyItems);
+      newSongs.add(state.currentSong!);
+      newSongs.addAll(queueItems);
+      await audioHandler.syncNativeQueue(newSongs);
     });
   }
 
@@ -464,8 +457,15 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     
     // Check loop one
     if (state.loopMode == AppLoopMode.one && state.currentSong != null) {
-      playSong(state.currentSong!);
+      _player.seek(Duration.zero);
       return;
+    }
+    
+    if (Platform.isAndroid || Platform.isIOS) {
+      if (_player.hasNext) {
+        _player.seekToNext();
+        return; // The currentIndexStream listener will handle the Flutter state update safely!
+      }
     }
     
     final songToPlay = state.queue.first;
@@ -515,6 +515,13 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     if (state.history.isEmpty) {
       _player.seek(Duration.zero);
       return;
+    }
+    
+    if (Platform.isAndroid || Platform.isIOS) {
+      if (_player.hasPrevious) {
+        _player.seekToPrevious();
+        return; // The currentIndexStream listener will handle the Flutter state update safely!
+      }
     }
     
     final songToPlay = state.history.first;
