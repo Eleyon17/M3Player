@@ -674,19 +674,11 @@ class _PlayerAudioHandler extends BaseAudioHandler
   }
 
   @override
-  Future<void> fastForward() async {
-    // Hijacked for Shuffle!
-    final newMode = _shuffleMode == AudioServiceShuffleMode.none 
-        ? AudioServiceShuffleMode.all 
-        : AudioServiceShuffleMode.none;
-    await setShuffleMode(newMode);
-  }
+  Future<void> fastForward() =>
+      _seekRelative(AudioService.config.fastForwardInterval);
 
   @override
-  Future<void> rewind() async {
-    // Hijacked for Favorite!
-    customEvent.add('action_favorite');
-  }
+  Future<void> rewind() => _seekRelative(-AudioService.config.rewindInterval);
 
   @override
   Future<void> seekForward(bool begin) async => _seekContinuously(begin, 1);
@@ -721,8 +713,6 @@ class _PlayerAudioHandler extends BaseAudioHandler
           : AudioServiceShuffleMode.none;
       await setShuffleMode(newMode);
     } else if (name == 'action_favorite') {
-      // In a full implementation, we'd fire an event to the UI here.
-      // For now, this prevents the tap from crashing the service.
       customEvent.add(name);
     }
   }
@@ -788,19 +778,9 @@ class _PlayerAudioHandler extends BaseAudioHandler
   /// Broadcasts the current state to all clients.
   void _broadcastState() {
     final controls = [
-      const MediaControl(
-        androidIcon: 'drawable/ic_stat_favorite',
-        label: 'Favorite',
-        action: MediaAction.rewind,
-      ),
       if (hasPrevious) MediaControl.skipToPrevious,
       if (_playing) MediaControl.pause else MediaControl.play,
       if (hasNext) MediaControl.skipToNext,
-      const MediaControl(
-        androidIcon: 'drawable/ic_stat_shuffle',
-        label: 'Shuffle',
-        action: MediaAction.fastForward,
-      ),
     ];
     playbackState.add(playbackState.nvalue!.copyWith(
       controls: controls,
@@ -808,12 +788,8 @@ class _PlayerAudioHandler extends BaseAudioHandler
         MediaAction.seek,
         MediaAction.seekForward,
         MediaAction.seekBackward,
-        MediaAction.rewind,
-        MediaAction.fastForward,
       },
-      androidCompactActionIndices: List.generate(controls.length, (i) => i)
-          .where((i) => controls[i].action != MediaAction.rewind && controls[i].action != MediaAction.fastForward)
-          .toList(),
+      androidCompactActionIndices: List.generate(controls.length, (i) => i),
       processingState: _justAudioEvent.errorCode != null
           ? AudioProcessingState.error
           : const {
