@@ -217,7 +217,11 @@ class _MobileViewState extends ConsumerState<MobileView> {
             Container(color: Theme.of(context).colorScheme.surface),
             
           Container(
-            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
+            color: _currentView == 1 
+                ? (Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.surfaceContainerHighest)
+                : _currentView == 2
+                    ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
+                    : Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
             child: Column(
               children: [
                 Expanded(
@@ -316,11 +320,17 @@ class _MobileViewState extends ConsumerState<MobileView> {
                         final playing = playerState?.playing;
                         if (processingState == ProcessingState.loading ||
                             processingState == ProcessingState.buffering) {
-                          return Container(
-                            margin: const EdgeInsets.all(8.0),
-                            width: 40.0,
-                            height: 40.0,
-                            child: const CircularProgressIndicator(),
+                          return BubblyIconButton(
+                            customIcon: const SizedBox(
+                              width: 40.0,
+                              height: 40.0,
+                              child: Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            onPressed: null,
                           );
                         } else if (playing != true) {
                           return BubblyIconButton(

@@ -114,10 +114,10 @@ class ThemeNotifier extends Notifier<ThemeData> {
         );
       } else {
         scheme = const ColorScheme.light().copyWith(
-          primary: HSLColor.fromAHSL(1.0, h, s, 0.30).toColor(),
-          surface: HSLColor.fromAHSL(1.0, h, s, 0.94).toColor(),
-          surfaceContainerHighest: HSLColor.fromAHSL(1.0, h, s, 0.90).toColor(),
-          secondaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.1).clamp(0.0, 1.0), 0.88).toColor(),
+          primary: HSLColor.fromAHSL(1.0, h, s, 0.25).toColor(),
+          surface: HSLColor.fromAHSL(1.0, h, (s - 0.2).clamp(0.0, 1.0), 0.98).toColor(),
+          surfaceContainerHighest: HSLColor.fromAHSL(1.0, h, s, 0.86).toColor(),
+          secondaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
           primaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
           onPrimaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.15).toColor(),
           onSurface: HSLColor.fromAHSL(1.0, h, s, 0.10).toColor(),

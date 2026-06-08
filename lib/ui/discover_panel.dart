@@ -252,7 +252,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
     final searchQuery = ref.watch(discoverSearchQueryProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: isDark ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.surfaceContainerHighest,
+      color: Colors.transparent,
       child: SafeArea(
         bottom: false,
         child: Column(
