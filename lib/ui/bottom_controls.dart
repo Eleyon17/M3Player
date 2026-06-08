@@ -80,21 +80,31 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                       final playing = playerState?.playing;
                       if (processingState == ProcessingState.loading ||
                           processingState == ProcessingState.buffering) {
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                          width: 48.0,
-                          height: 48.0,
-                          child: const CircularProgressIndicator(),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: BubblyIconButton(
+                            customIcon: const SizedBox(
+                              width: 40.0,
+                              height: 40.0,
+                              child: Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            onPressed: null,
+                          ),
                         );
                       } else if (playing != true) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: BubblyIconButton(
-                            icon: Icons.play_arrow_rounded,
-                            size: 48.0,
+                            customIcon: HollowPlayIcon(
+                              size: 40.0,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
                             noShadow: false,
-                            color: Theme.of(context).colorScheme.primary,
-                            iconColor: Theme.of(context).colorScheme.onPrimary,
+                            color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: player.play,
                           ),
                         );
@@ -102,11 +112,12 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: BubblyIconButton(
-                            icon: Icons.pause_rounded,
-                            size: 48.0,
+                            customIcon: HollowPauseIcon(
+                              size: 40.0,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
                             noShadow: false,
-                            color: Theme.of(context).colorScheme.primary,
-                            iconColor: Theme.of(context).colorScheme.onPrimary,
+                            color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: player.pause,
                           ),
                         );
@@ -114,11 +125,12 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: BubblyIconButton(
-                            icon: Icons.play_arrow_rounded,
-                            size: 48.0,
+                            customIcon: HollowPlayIcon(
+                              size: 40.0,
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            ),
                             noShadow: false,
-                            color: Theme.of(context).colorScheme.primary,
-                            iconColor: Theme.of(context).colorScheme.onPrimary,
+                            color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: () => player.seek(Duration.zero),
                           ),
                         );
