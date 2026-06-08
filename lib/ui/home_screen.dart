@@ -73,7 +73,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: Stack(
         children: [
           // Solid base color
-          Container(color: Color.lerp(Theme.of(context).colorScheme.surface, Theme.of(context).colorScheme.primaryContainer, 0.2)),
+          Container(color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.surfaceContainerHighest),
             
           // Subtle ambient background
           if (currentSong != null)
@@ -85,7 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   duration: const Duration(milliseconds: 800),
                   child: CachedNetworkImage(
                     key: ValueKey(currentSong.id),
-                    imageUrl: api.getCoverUrl(currentSong.coverArt ?? currentSong.albumId ?? currentSong.id, size: 500),
+                    imageUrl: api.getCoverUrl(currentSong.coverArt ?? currentSong.id, size: 200),
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: double.infinity,

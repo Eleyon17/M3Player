@@ -31,21 +31,11 @@ class MyAudioHandler {
       final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
       return AudioSource.uri(Uri.parse(proxyUrl), tag: _songToMediaItem(s));
     }).toList();
-    
-    if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
-      if (songs.isNotEmpty && initialIndex < sources.length) {
-        await player.setAudioSource(sources[initialIndex]);
-      }
-      return;
-    }
-
     _playlist = ConcatenatingAudioSource(children: sources);
     await player.setAudioSource(_playlist, initialIndex: initialIndex);
   }
 
   Future<void> addSongsToQueue(List<Song> songs) async {
-    if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) return;
-
     final sources = songs.map((s) {
       final rawUrl = api.getStreamUrl(s.id);
       final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
@@ -56,8 +46,6 @@ class MyAudioHandler {
 
   /// Dynamically updates the native queue without interrupting playback
   Future<void> syncNativeQueue(List<Song> newSongs) async {
-    if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) return;
-
     final currentIndex = player.currentIndex;
     if (currentIndex == null || currentIndex < 0 || currentIndex >= _playlist.length) {
       await replaceQueue(newSongs);

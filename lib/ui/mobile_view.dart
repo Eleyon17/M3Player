@@ -205,7 +205,7 @@ class _MobileViewState extends ConsumerState<MobileView> {
             ImageFiltered(
               imageFilter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
               child: CachedNetworkImage(
-                imageUrl: api.getCoverUrl(currentSong.coverArt ?? currentSong.albumId ?? currentSong.id, size: 500),
+                imageUrl: api.getCoverUrl(currentSong.coverArt ?? currentSong.id, size: 500),
                 fit: BoxFit.cover,
                 errorWidget: (context, url, error) => Container(color: Theme.of(context).colorScheme.surface),
               ),
@@ -214,7 +214,7 @@ class _MobileViewState extends ConsumerState<MobileView> {
             Container(color: Theme.of(context).colorScheme.surface),
             
           Container(
-            color: Color.lerp(Theme.of(context).colorScheme.surface, Theme.of(context).colorScheme.primaryContainer, 0.4)?.withValues(alpha: 0.85),
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
             child: SafeArea(
                 bottom: false,
                 child: Column(

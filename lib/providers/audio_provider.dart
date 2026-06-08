@@ -216,13 +216,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
 
   void _listenToPlayer() {
     _player.processingStateStream.listen((state) {
-      bool useManualNext = false;
-      if (kIsWeb) {
-        useManualNext = true;
-      } else if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-        useManualNext = true;
-      }
-      if (useManualNext && state == ProcessingState.completed) {
+      if (state == ProcessingState.completed) {
         next();
       }
     });
