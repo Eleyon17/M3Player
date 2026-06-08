@@ -80,13 +80,20 @@ class ThemeNotifier extends Notifier<ThemeData> {
 
   Future<void> _updatePalette(Song song) async {
     final api = ref.read(navidromeClientProvider);
-    final url = api.getCoverUrl(song.coverArt ?? song.id, size: 300);
+    final url = api.getCoverUrl(song.albumId ?? song.id, size: 300);
     
     try {
       final imageProvider = NetworkImage(url);
       final palette = await PaletteGenerator.fromImageProvider(imageProvider);
       
-      final baseColor = palette.vibrantColor?.color ?? palette.dominantColor?.color ?? const Color(0xFF8C6DB4);
+      // Check for race condition: did the user skip to another song while we were downloading?
+      final currentSong = ref.read(queueProvider).currentSong;
+      if (currentSong == null || currentSong.id != song.id) {
+        return;
+      }
+
+      // Priority: dominantColor over vibrantColor to match ColorThief behavior
+      final baseColor = palette.dominantColor?.color ?? palette.vibrantColor?.color ?? const Color(0xFF8C6DB4);
       final hsl = HSLColor.fromColor(baseColor);
       final h = hsl.hue;
       final s = hsl.saturation;
@@ -94,16 +101,28 @@ class ThemeNotifier extends Notifier<ThemeData> {
       ColorScheme scheme;
       
       if (isDarkMode) {
-        scheme = ColorScheme.fromSeed(
-          seedColor: baseColor,
-          brightness: Brightness.dark,
+        scheme = const ColorScheme.dark().copyWith(
+          surface: HSLColor.fromAHSL(1.0, h, (s - 0.1).clamp(0.0, 1.0), 0.12).toColor(),
+          surfaceContainerHighest: HSLColor.fromAHSL(1.0, h, (s - 0.15).clamp(0.0, 1.0), 0.20).toColor(),
+          secondaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.2).clamp(0.0, 1.0), 0.25).toColor(),
+          primary: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
+          primaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.1).clamp(0.0, 1.0), 0.75).toColor(),
+          onPrimaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.1).clamp(0.0, 1.0), 0.15).toColor(),
+          onSurface: HSLColor.fromAHSL(1.0, h, s, 0.90).toColor(),
+          onSurfaceVariant: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
+          onSecondaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.85).toColor(),
         );
       } else {
-        // Material 3 design calls for much more neutral backgrounds in light mode.
-        // We use fromSeed to guarantee perfectly balanced, low-chroma tonal palettes.
-        scheme = ColorScheme.fromSeed(
-          seedColor: baseColor,
-          brightness: Brightness.light,
+        scheme = const ColorScheme.light().copyWith(
+          primary: HSLColor.fromAHSL(1.0, h, s, 0.30).toColor(),
+          surface: HSLColor.fromAHSL(1.0, h, s, 0.94).toColor(),
+          surfaceContainerHighest: HSLColor.fromAHSL(1.0, h, s, 0.90).toColor(),
+          secondaryContainer: HSLColor.fromAHSL(1.0, h, (s - 0.1).clamp(0.0, 1.0), 0.88).toColor(),
+          primaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.80).toColor(),
+          onPrimaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.15).toColor(),
+          onSurface: HSLColor.fromAHSL(1.0, h, s, 0.10).toColor(),
+          onSurfaceVariant: HSLColor.fromAHSL(1.0, h, s, 0.25).toColor(),
+          onSecondaryContainer: HSLColor.fromAHSL(1.0, h, s, 0.20).toColor(),
         );
       }
       
