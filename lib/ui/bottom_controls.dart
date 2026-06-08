@@ -99,10 +99,9 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: BubblyIconButton(
-                            customIcon: HollowPlayIcon(
-                              size: 40.0,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            ),
+                            icon: Icons.play_arrow_rounded,
+                            size: 40.0,
+                            iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             noShadow: false,
                             color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: player.play,
@@ -112,10 +111,9 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: BubblyIconButton(
-                            customIcon: HollowPauseIcon(
-                              size: 40.0,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            ),
+                            icon: Icons.pause_rounded,
+                            size: 40.0,
+                            iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             noShadow: false,
                             color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: player.pause,
@@ -125,10 +123,9 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
                           child: BubblyIconButton(
-                            customIcon: HollowPlayIcon(
-                              size: 40.0,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            ),
+                            icon: Icons.play_arrow_rounded,
+                            size: 40.0,
+                            iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
                             noShadow: false,
                             color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: () => player.seek(Duration.zero),

@@ -31,8 +31,17 @@ class MyAudioHandler {
       final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
       return AudioSource.uri(Uri.parse(proxyUrl), tag: _songToMediaItem(s));
     }).toList();
-    _playlist = ConcatenatingAudioSource(children: sources);
-    await player.setAudioSource(_playlist, initialIndex: initialIndex);
+    
+    if (kIsWeb) {
+      await player.stop();
+    }
+    
+    if (sources.length == 1 && (kIsWeb || (!Platform.isAndroid && !Platform.isIOS))) {
+      await player.setAudioSource(sources.first);
+    } else {
+      _playlist = ConcatenatingAudioSource(children: sources);
+      await player.setAudioSource(_playlist, initialIndex: initialIndex);
+    }
   }
 
   Future<void> addSongsToQueue(List<Song> songs) async {

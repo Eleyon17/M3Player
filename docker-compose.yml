@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  m3player-web:
+    image: nginx:alpine
+    container_name: m3player-web
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount the compiled web app directly into Nginx's HTML serving directory
+      - ./AllBuilds/Web-App:/usr/share/nginx/html:ro
+    
+    # If you are using a cloudflared container in the same docker-compose file, 
+    # you can add it here and put them on the same network!
+    # networks:
+    #   - tunnel_network
+
+# networks:
+#   tunnel_network:
+#     name: tunnel_network
