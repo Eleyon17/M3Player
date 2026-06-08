@@ -23,7 +23,7 @@ class MobileView extends ConsumerStatefulWidget {
 
 class _MobileViewState extends ConsumerState<MobileView> {
   // Mobile views: 0 = Now Playing, 1 = Discover, 2 = Queue
-  int _currentView = 0;
+  int _currentView = 1;
   double? _dragValue;
 
   void _switchView(int view) {
@@ -48,7 +48,9 @@ class _MobileViewState extends ConsumerState<MobileView> {
       mainContent = const QueuePanel();
     } else {
       // Now Playing Mobile View
-      mainContent = Column(
+      mainContent = SafeArea(
+        bottom: false,
+        child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (currentSong != null) ...[
@@ -194,6 +196,7 @@ class _MobileViewState extends ConsumerState<MobileView> {
             ),
           ],
         ],
+      ),
       );
     }
 
@@ -215,19 +218,16 @@ class _MobileViewState extends ConsumerState<MobileView> {
             
           Container(
             color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.8),
-            child: SafeArea(
-                bottom: false,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: mainContent,
-                    ),
-                    // Mobile Playbar
-                    _buildMobilePlaybar(context, ref),
-                  ],
+            child: Column(
+              children: [
+                Expanded(
+                  child: mainContent,
                 ),
-              ),
+                // Mobile Playbar
+                _buildMobilePlaybar(context, ref),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -288,16 +288,14 @@ class _MobileViewState extends ConsumerState<MobileView> {
                   icon: Icon(Icons.explore, color: _currentView == 1 ? Theme.of(context).colorScheme.primary : null),
                   onPressed: () => _switchView(1),
                 ),
-                StreamBuilder<bool>(
-                  stream: player.shuffleModeEnabledStream,
-                  builder: (context, snapshot) {
-                    final isShuffle = snapshot.data ?? false;
+                Builder(
+                  builder: (context) {
+                    final isShuffle = ref.watch(queueProvider).isShuffle;
                     return IconButton(
                       icon: const Icon(Icons.shuffle, size: 24),
                       color: isShuffle ? Theme.of(context).colorScheme.primary : null,
                       onPressed: () {
-                        player.setShuffleModeEnabled(!isShuffle);
-                        if (!isShuffle) player.shuffle();
+                        ref.read(queueProvider.notifier).toggleShuffle();
                       },
                     );
                   },

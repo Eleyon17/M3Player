@@ -298,8 +298,10 @@ class NavidromeClient {
       artists = artists.take(5).toList();
       
       List<Song> songs = [];
-      for (final artist in artists) {
-        final top = await getTopSongs(artist, count: 10);
+      final futures = artists.map((artist) => getTopSongs(artist, count: 10));
+      final results = await Future.wait(futures);
+      
+      for (final top in results) {
         // Never suggest a song you've already favorited
         songs.addAll(top.where((s) => !starredIds.contains(s.id)));
       }

@@ -253,7 +253,9 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       color: isDark ? Theme.of(context).colorScheme.surface : Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Column(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
         children: [
         // Soft Search Bar
         Padding(
@@ -403,6 +405,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
           ),
         ),
         ],
+      ),
       ),
     );
   }
@@ -1160,7 +1163,7 @@ class AlbumTile extends ConsumerWidget {
                 child: AspectRatio(
                   aspectRatio: 1,
                   child: CachedNetworkImage(
-                    imageUrl: api.getCoverUrl(albumId),
+                    imageUrl: api.getCoverUrl(albumId, size: 300),
                     fit: BoxFit.cover,
                     errorWidget: (_, __, ___) => Container(
                       color: Theme.of(context).colorScheme.primaryContainer,
@@ -1240,7 +1243,7 @@ class ArtistTile extends ConsumerWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: CachedNetworkImage(
-                  imageUrl: api.getCoverUrl(artistId),
+                  imageUrl: api.getCoverUrl(artistId, size: 300),
                   fit: BoxFit.cover,
                   errorWidget: (context, url, error) => Container(
                     color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),

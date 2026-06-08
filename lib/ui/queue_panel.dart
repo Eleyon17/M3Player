@@ -136,9 +136,11 @@ class HistoryPanel extends ConsumerWidget {
                           leading: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: CachedNetworkImage(
-                              imageUrl: api.getCoverUrl(song.albumId ?? song.id),
+                              imageUrl: api.getCoverUrl(song.albumId ?? song.id, size: 150),
                               width: 50,
                               height: 50,
+                              memCacheWidth: 150,
+                              memCacheHeight: 150,
                               fit: BoxFit.cover,
                               errorWidget: (c, u, e) => Container(
                                 width: 50, height: 50,
@@ -171,7 +173,9 @@ class QueuePanel extends ConsumerWidget {
 
     return Container(
       color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-      child: Column(
+      child: SafeArea(
+        bottom: false,
+        child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -225,9 +229,11 @@ class QueuePanel extends ConsumerWidget {
                           leading: ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: CachedNetworkImage(
-                              imageUrl: api.getCoverUrl(queueState.currentSong!.albumId ?? queueState.currentSong!.id),
+                              imageUrl: api.getCoverUrl(queueState.currentSong!.albumId ?? queueState.currentSong!.id, size: 150),
                               width: 64,
                               height: 64,
+                              memCacheWidth: 150,
+                              memCacheHeight: 150,
                               fit: BoxFit.cover,
                               errorWidget: (_, __, ___) => Container(
                                 width: 64, height: 64,
@@ -320,6 +326,7 @@ class QueuePanel extends ConsumerWidget {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -360,11 +367,11 @@ class QueuePanel extends ConsumerWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(24),
                   child: CachedNetworkImage(
-                    imageUrl: api.getCoverUrl(song.albumId ?? song.id),
+                    imageUrl: api.getCoverUrl(song.albumId ?? song.id, size: 150),
                     width: 70,
                     height: 70,
-                    memCacheWidth: 140,
-                    memCacheHeight: 140,
+                    memCacheWidth: 150,
+                    memCacheHeight: 150,
                     fit: BoxFit.cover,
                     errorWidget: (context, url, error) => Container(
                       width: 70,
