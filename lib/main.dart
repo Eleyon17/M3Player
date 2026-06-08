@@ -48,7 +48,7 @@ late MyAudioHandler audioHandler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  if (Platform.isAndroid) {
+  if (!kIsWeb && Platform.isAndroid) {
     // We purposefully do NOT await Permission.notification.request() here.
     // If Android Auto wakes the app up in the background, there is no UI context,
     // and requesting permissions blocks the isolate forever, breaking Android Auto.

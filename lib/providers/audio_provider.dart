@@ -112,7 +112,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
   }
 
   void _triggerDynamicSync() {
-    if (!Platform.isAndroid && !Platform.isIOS) return;
+    if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
     _nativeSyncTimer?.cancel();
     _nativeSyncTimer = Timer(const Duration(milliseconds: 200), () async {
       if (_isChangingSongInternally || state.currentSong == null) return;
@@ -162,7 +162,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
           if (savedCurrent != null && isInitial) {
             final itemsToPlay = <Song>[];
             int initialIndex = 0;
-            if (Platform.isAndroid || Platform.isIOS) {
+            if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
               final historyItems = savedHistory.take(1).toList().reversed.toList();
               final queueItems = savedQueue.take(50).toList();
               itemsToPlay.addAll(historyItems);
@@ -234,7 +234,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     // The native audio player is the ABSOLUTE TRUTH. If it changes to a new song,
     // the Flutter app MUST adjust its queue and history to match.
     _player.currentIndexStream.listen((index) {
-      if (!Platform.isAndroid && !Platform.isIOS) return;
+      if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) return;
       if (index == null) return;
       
       final sequenceState = _player.sequenceState;
@@ -369,7 +369,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       int initialIndex = 0;
       final itemsToPlay = <Song>[];
       
-      if (Platform.isAndroid || Platform.isIOS) {
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
         // We pass a subset of the queue to the native OS to avoid memory issues
         // while still giving Android Auto/Wear OS enough context to display a queue.
         final historyItems = state.history.take(1).toList().reversed.toList();
@@ -527,7 +527,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       return;
     }
     
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       if (_player.hasNext) {
         _player.seekToNext();
         return; // The currentIndexStream listener will handle the Flutter state update safely!
@@ -583,7 +583,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       return;
     }
     
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       if (_player.hasPrevious) {
         _player.seekToPrevious();
         return; // The currentIndexStream listener will handle the Flutter state update safely!

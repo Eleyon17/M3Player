@@ -42,14 +42,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   double _narrowSplitRatio = 0.6;
 
   bool get isMobile {
-    if (kIsWeb) return false;
-    return Platform.isIOS || Platform.isAndroid;
+    return !kIsWeb && (Platform.isIOS || Platform.isAndroid);
   }
 
   @override
   void initState() {
     super.initState();
-    if (Platform.isAndroid && !kIsWeb) {
+    if (!kIsWeb && Platform.isAndroid) {
       Permission.notification.request();
     }
   }
