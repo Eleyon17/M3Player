@@ -26,17 +26,36 @@ class MyAudioHandler {
   }
 
   Future<void> replaceQueue(List<Song> songs, {int initialIndex = 0}) async {
+    if (songs.isEmpty) return;
+    
+    if (kIsWeb) {
+      // On Web, use setUrl directly to bypass AudioSource wrapping issues,
+      // and append a timestamp to force the browser to skip caching and fetch the new track!
+      if (songs.length == 1) {
+        final rawUrl = api.getStreamUrl(songs.first.id);
+        final cacheBustedUrl = "$rawUrl&_t=${DateTime.now().millisecondsSinceEpoch}";
+        await player.setUrl(cacheBustedUrl);
+        return;
+      } else {
+        final sources = songs.map((s) {
+          final rawUrl = api.getStreamUrl(s.id);
+          final cacheBustedUrl = "$rawUrl&_t=${DateTime.now().millisecondsSinceEpoch}";
+          return AudioSource.uri(Uri.parse(cacheBustedUrl), tag: _songToMediaItem(s));
+        }).toList();
+        _playlist = ConcatenatingAudioSource(children: sources);
+        await player.setAudioSource(_playlist, initialIndex: initialIndex);
+        return;
+      }
+    }
+
+    // Native Platforms (Android/iOS/Desktop)
     final sources = songs.map((s) {
       final rawUrl = api.getStreamUrl(s.id);
-      final proxyUrl = kIsWeb ? rawUrl : ProxyServer.getProxyUrl(rawUrl);
+      final proxyUrl = ProxyServer.getProxyUrl(rawUrl);
       return AudioSource.uri(Uri.parse(proxyUrl), tag: _songToMediaItem(s));
     }).toList();
     
-    if (kIsWeb) {
-      await player.stop();
-    }
-    
-    if (sources.length == 1 && (kIsWeb || (!Platform.isAndroid && !Platform.isIOS))) {
+    if (sources.length == 1 && !Platform.isAndroid && !Platform.isIOS) {
       await player.setAudioSource(sources.first);
     } else {
       _playlist = ConcatenatingAudioSource(children: sources);
