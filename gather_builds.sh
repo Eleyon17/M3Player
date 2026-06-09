@@ -28,8 +28,9 @@ fi
 
 # 4. Copy the Web Build
 if [ -d "build/web" ]; then
-    rm -rf "$TARGET/Web-App"
-    cp -r "build/web" "$TARGET/Web-App"
+    mkdir -p "$TARGET/Web-App"
+    rm -rf "$TARGET/Web-App"/*
+    cp -r build/web/* "$TARGET/Web-App/"
     echo "✅ Copied Web build into AllBuilds/Web-App"
 fi
 

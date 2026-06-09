@@ -29,6 +29,9 @@ class MyAudioHandler {
     if (songs.isEmpty) return;
     
     if (kIsWeb) {
+      // On Web, always stop before setting a new source to free platform resources
+      await player.stop();
+
       // On Web, use setUrl directly to bypass AudioSource wrapping issues,
       // and append a timestamp to force the browser to skip caching and fetch the new track!
       if (songs.length == 1) {

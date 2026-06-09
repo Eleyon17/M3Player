@@ -336,27 +336,19 @@ class _MobileViewState extends ConsumerState<MobileView> {
                           );
                         } else if (playing != true) {
                           return BubblyIconButton(
-                            customIcon: HollowPlayIcon(
-                              size: 40.0,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            ),
+                            customIcon: SolidPlayIcon(size: 40.0, color: Theme.of(context).colorScheme.onPrimaryContainer),
                             color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: player.play,
                           );
                         } else if (processingState != ProcessingState.completed) {
                           return BubblyIconButton(
-                            icon: Icons.pause_rounded,
-                            size: 40.0,
-                            iconColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                            customIcon: SolidPauseIcon(size: 40.0, color: Theme.of(context).colorScheme.onPrimaryContainer),
                             color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: player.pause,
                           );
                         } else {
                           return BubblyIconButton(
-                            customIcon: HollowPlayIcon(
-                              size: 40.0,
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            ),
+                            customIcon: SolidPlayIcon(size: 40.0, color: Theme.of(context).colorScheme.onPrimaryContainer),
                             color: Theme.of(context).colorScheme.primaryContainer,
                             onPressed: () => player.seek(Duration.zero),
                           );

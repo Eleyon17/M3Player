@@ -428,13 +428,11 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
 
   void playInstantly(Song song) {
     if (state.currentSong == null) {
-      playSong(song);
+      state = state.copyWith(queue: [song, ...state.queue]);
+      next();
     } else {
-      final newHistory = List<Song>.from(state.history);
-      newHistory.insert(0, state.currentSong!);
-      if (newHistory.length > 50) newHistory.removeLast();
-      
-      state = state.copyWith(history: newHistory);
+      // Create a brand new queue that inserts the song at the front
+      state = state.copyWith(queue: [song, ...state.queue]);
       playSong(song);
     }
   }

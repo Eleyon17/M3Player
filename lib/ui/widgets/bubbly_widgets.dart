@@ -192,3 +192,81 @@ class _HollowPausePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+class SolidPlayIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+  const SolidPlayIcon({Key? key, required this.size, required this.color}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _SolidPlayPainter(color: color),
+    );
+  }
+}
+
+class _SolidPlayPainter extends CustomPainter {
+  final Color color;
+  _SolidPlayPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path();
+    path.moveTo(size.width * 0.35, size.height * 0.25);
+    path.lineTo(size.width * 0.75, size.height * 0.5);
+    path.lineTo(size.width * 0.35, size.height * 0.75);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class SolidPauseIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+  const SolidPauseIcon({Key? key, required this.size, required this.color}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _SolidPausePainter(color: color),
+    );
+  }
+}
+
+class _SolidPausePainter extends CustomPainter {
+  final Color color;
+  _SolidPausePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final radius = Radius.circular(size.width * 0.08);
+    final rrect1 = RRect.fromRectAndRadius(
+        Rect.fromLTRB(size.width * 0.25, size.height * 0.25, size.width * 0.40, size.height * 0.75),
+        radius);
+    final rrect2 = RRect.fromRectAndRadius(
+        Rect.fromLTRB(size.width * 0.60, size.height * 0.25, size.width * 0.75, size.height * 0.75),
+        radius);
+
+    canvas.drawRRect(rrect1, paint);
+    canvas.drawRRect(rrect2, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
