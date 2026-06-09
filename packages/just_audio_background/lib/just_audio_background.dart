@@ -17,12 +17,16 @@ typedef GetChildrenCallback = Future<List<MediaItem>> Function(
     String parentMediaId);
 typedef PlayFromMediaIdCallback = Future<void> Function(String mediaId);
 typedef SkipToQueueItemCallback = Future<void> Function(int index);
+typedef SearchCallback = Future<List<MediaItem>> Function(String query, Map<String, dynamic>? extras);
+typedef PlayFromSearchCallback = Future<void> Function(String query, Map<String, dynamic>? extras);
 
 /// Provides the [init] method to initialise just_audio for background playback.
 class JustAudioBackground {
   static GetChildrenCallback? getChildrenCallback;
   static PlayFromMediaIdCallback? playFromMediaIdCallback;
   static SkipToQueueItemCallback? skipToQueueItemCallback;
+  static SearchCallback? searchCallback;
+  static PlayFromSearchCallback? playFromSearchCallback;
 
   static const String customActionFavorite = 'customActionFavorite';
   static final customEventController = StreamController<String>.broadcast();
@@ -451,6 +455,22 @@ class _PlayerAudioHandler extends BaseAudioHandler
       return await JustAudioBackground.playFromMediaIdCallback!(mediaId);
     }
     return super.playFromMediaId(mediaId, extras);
+  }
+
+  @override
+  Future<List<MediaItem>> search(String query, [Map<String, dynamic>? extras]) async {
+    if (JustAudioBackground.searchCallback != null) {
+      return await JustAudioBackground.searchCallback!(query, extras);
+    }
+    return super.search(query, extras);
+  }
+
+  @override
+  Future<void> playFromSearch(String query, [Map<String, dynamic>? extras]) async {
+    if (JustAudioBackground.playFromSearchCallback != null) {
+      return await JustAudioBackground.playFromSearchCallback!(query, extras);
+    }
+    return super.playFromSearch(query, extras);
   }
 
   Future<void> cancelStreamSubscriptions() async {

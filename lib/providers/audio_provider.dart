@@ -431,8 +431,8 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       state = state.copyWith(queue: [song, ...state.queue]);
       next();
     } else {
-      // Create a brand new queue that inserts the song at the front
-      state = state.copyWith(queue: [song, ...state.queue]);
+      // Create a brand new queue that inserts the old currentSong at the front
+      state = state.copyWith(queue: [state.currentSong!, ...state.queue]);
       playSong(song);
     }
   }
@@ -637,14 +637,12 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     final newQueue = songs.sublist(initialIndex + 1);
     
     state = state.copyWith(
-      currentSong: currentSong,
       queue: newQueue,
       history: history,
       isShuffle: false,
     );
     
-    audioHandler.player.seek(Duration.zero);
-    _triggerDynamicSync();
+    playSong(currentSong);
   }
 
   void toggleShuffle() {
@@ -710,10 +708,10 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       try {
         if (parentMediaId == AudioService.browsableRootId || parentMediaId == 'root') {
           return [
-            MediaItem(id: 'tab_playlists', title: 'Playlists', playable: false),
-            MediaItem(id: 'tab_albums', title: 'Albums', playable: false),
-            MediaItem(id: 'tab_artists', title: 'Artists', playable: false),
-            MediaItem(id: 'tab_favorites', title: 'Favorites', playable: false),
+            MediaItem(id: 'tab_playlists', title: 'Playlists', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
+            MediaItem(id: 'tab_albums', title: 'Albums', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
+            MediaItem(id: 'tab_artists', title: 'Artists', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
+            MediaItem(id: 'tab_favorites', title: 'Favorites', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
           ];
         }
         
@@ -834,6 +832,38 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
         }
       } catch (e) {
         debugPrint('Error playing from Android Auto mediaId: \$e');
+      }
+    };
+
+    JustAudioBackground.searchCallback = (query, extras) async {
+      try {
+        final result = await api.search(query);
+        final songs = (result['songs'] as List?)?.cast<Song>() ?? [];
+        return songs.map((s) => MediaItem(
+          id: "search_song_${s.id}",
+          title: s.title,
+          album: s.album,
+          artist: s.artist,
+          artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
+          playable: true,
+          extras: s.toJson()
+        )).toList();
+      } catch (e) {
+        debugPrint('Error handling Android Auto searchCallback: $e');
+      }
+      return [];
+    };
+
+    JustAudioBackground.playFromSearchCallback = (query, extras) async {
+      try {
+        final result = await api.search(query);
+        final songs = (result['songs'] as List?)?.cast<Song>() ?? [];
+        if (songs.isNotEmpty) {
+          // Play the results starting from the first matched song
+          ref.read(queueProvider.notifier).playQueue(songs, initialIndex: 0);
+        }
+      } catch (e) {
+        debugPrint('Error handling Android Auto playFromSearchCallback: $e');
       }
     };
   }

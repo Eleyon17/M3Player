@@ -70,6 +70,10 @@ void main() async {
       androidNotificationChannelName: 'M3Player Audio',
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
+      androidBrowsableRootExtras: {
+        'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2,
+        'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1,
+      },
     );
   }
 
