@@ -40,7 +40,7 @@ class _DiscoverPanelState extends ConsumerState<DiscoverPanel> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   bool _hasUpdate = false;
-  final String CURRENT_APP_VERSION = 'v0.0.3';
+  final String CURRENT_APP_VERSION = 'v0.0.4';
   String? _latestVersionTag;
 
   @override
