@@ -708,10 +708,10 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       try {
         if (parentMediaId == AudioService.browsableRootId || parentMediaId == 'root') {
           return [
-            MediaItem(id: 'tab_playlists', title: 'Playlists', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
+            MediaItem(id: 'tab_playlists', title: 'Playlists', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 1, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
             MediaItem(id: 'tab_albums', title: 'Albums', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
-            MediaItem(id: 'tab_artists', title: 'Artists', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
-            MediaItem(id: 'tab_favorites', title: 'Favorites', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
+            MediaItem(id: 'tab_artists', title: 'Artists', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 1, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
+            MediaItem(id: 'tab_favorites', title: 'Favorites', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 1, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
           ];
         }
         

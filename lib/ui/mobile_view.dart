@@ -241,6 +241,7 @@ class _MobileViewState extends ConsumerState<MobileView> {
 
   Widget _buildMobilePlaybar(BuildContext context, WidgetRef ref) {
     final player = ref.watch(audioPlayerProvider);
+    final currentSong = ref.watch(queueProvider).currentSong;
     
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -258,7 +259,11 @@ class _MobileViewState extends ConsumerState<MobileView> {
                     stream: player.positionStream,
                     builder: (context, snapshot) {
                       final position = snapshot.data ?? Duration.zero;
-                      final duration = player.duration ?? Duration.zero;
+                      var duration = player.duration;
+                      if (duration == null || duration.inMilliseconds == 0) {
+                        duration = Duration(seconds: currentSong?.duration ?? 0);
+                      }
+                      
                       return WigglingProgressBar(
                         value: (_dragValue ?? position.inMilliseconds.toDouble()).clamp(
                           0.0, 

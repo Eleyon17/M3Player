@@ -27,6 +27,7 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
   @override
   Widget build(BuildContext context) {
     final player = ref.watch(audioPlayerProvider);
+    final currentSong = ref.watch(queueProvider).currentSong;
     final theme = Theme.of(context);
     final playbarColor = theme.colorScheme.surfaceContainerHighest;
     final isDarkPlaybar = playbarColor.computeLuminance() < 0.5;
@@ -156,7 +157,10 @@ class _BottomControlsState extends ConsumerState<BottomControls> {
                   stream: player.positionStream,
                   builder: (context, snapshot) {
                     final position = snapshot.data ?? Duration.zero;
-                    final duration = player.duration ?? Duration.zero;
+                    var duration = player.duration;
+                    if (duration == null || duration.inMilliseconds == 0) {
+                      duration = Duration(seconds: currentSong?.duration ?? 0);
+                    }
                     
                     return Row(
                       children: [

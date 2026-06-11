@@ -71,7 +71,7 @@ void main() async {
       androidNotificationOngoing: true,
       androidStopForegroundOnPause: true,
       androidBrowsableRootExtras: {
-        'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2,
+        'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 1,
         'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1,
       },
     );
@@ -97,11 +97,21 @@ void main() async {
 
 
 
-  runApp(ProviderScope(
+  final container = ProviderContainer(
     overrides: [
-      navidromeClientProvider.overrideWith((ref) => navidromeClient),
-      audioPlayerProvider.overrideWith((ref) => audioHandler.player),
+      navidromeClientProvider.overrideWithValue(navidromeClient),
+      audioPlayerProvider.overrideWithValue(audioHandler.player),
     ],
+  );
+
+  // If the user is logged in, forcefully initialize queueProvider so Android Auto
+  // callbacks (like getChildren) are registered immediately, even if no UI is rendered.
+  if (savedUrl != null && savedUser != null && savedPass != null) {
+    container.read(queueProvider);
+  }
+
+  runApp(UncontrolledProviderScope(
+    container: container,
     child: MyApp(initialRoute: (savedUrl != null && savedUser != null && savedPass != null) ? '/home' : '/login'),
   ));
 }
