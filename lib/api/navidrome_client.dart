@@ -50,7 +50,7 @@ class NavidromeClient {
   }
 
   String getStreamUrl(String id) {
-    return '$url/rest/stream.view?id=$id&${_getMediaParams()}&format=mp3';
+    return '$url/rest/stream.view?id=$id&${_getMediaParams()}';
   }
 
   Future<Map<String, dynamic>> _fetch(String endpoint, [String params = '']) async {

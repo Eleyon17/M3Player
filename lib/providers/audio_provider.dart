@@ -704,6 +704,21 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       }
     };
     
+    List<MediaItem>? cachedPlaylists;
+    List<MediaItem>? cachedAlbums;
+    List<MediaItem>? cachedArtists;
+    List<MediaItem>? cachedFavorites;
+
+    // Prefetch in background
+    Future.microtask(() async {
+      try {
+        api.getPlaylists().then((p) => cachedPlaylists = p.map((p) => MediaItem(id: "playlist_${p['id']}", title: p['name'] ?? 'Unknown', playable: false)).toList());
+        api.getAlbumList(size: 50).then((a) => cachedAlbums = a.map((a) => MediaItem(id: "album_${a['id']}", title: a['name'] ?? 'Unknown', artist: a['artist'], artUri: Uri.tryParse(api.getCoverUrl(a['id'], size: 500)), playable: false)).toList());
+        api.getArtists().then((a) => cachedArtists = a.map((a) => MediaItem(id: "artist_${a['id']}", title: a['name'] ?? 'Unknown', playable: false)).toList());
+        api.getStarred().then((s) => cachedFavorites = s.map((s) => MediaItem(id: "fav_song_${s.id}", title: s.title, album: s.album, artist: s.artist, artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)), playable: true, extras: s.toJson())).toList());
+      } catch (_) {}
+    });
+
     JustAudioBackground.getChildrenCallback = (parentMediaId) async {
       try {
         if (parentMediaId == AudioService.browsableRootId || parentMediaId == 'root') {
@@ -716,29 +731,36 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
         }
         
         if (parentMediaId == 'tab_playlists') {
+          if (cachedPlaylists != null) return cachedPlaylists!;
           final playlists = await api.getPlaylists();
-          return playlists.map((p) => MediaItem(id: "playlist_${p['id']}", title: p['name'] ?? 'Unknown', playable: false)).toList();
+          cachedPlaylists = playlists.map((p) => MediaItem(id: "playlist_${p['id']}", title: p['name'] ?? 'Unknown', playable: false)).toList();
+          return cachedPlaylists!;
         }
         
         if (parentMediaId == 'tab_albums') {
+          if (cachedAlbums != null) return cachedAlbums!;
           final albums = await api.getAlbumList(size: 50); // Get recent albums
-          return albums.map((a) => MediaItem(
+          cachedAlbums = albums.map((a) => MediaItem(
             id: "album_${a['id']}", 
             title: a['name'] ?? 'Unknown', 
             artist: a['artist'], 
             artUri: Uri.tryParse(api.getCoverUrl(a['id'], size: 500)),
             playable: false
           )).toList();
+          return cachedAlbums!;
         }
         
         if (parentMediaId == 'tab_artists') {
+          if (cachedArtists != null) return cachedArtists!;
           final artists = await api.getArtists();
-          return artists.map((a) => MediaItem(id: "artist_${a['id']}", title: a['name'] ?? 'Unknown', playable: false)).toList();
+          cachedArtists = artists.map((a) => MediaItem(id: "artist_${a['id']}", title: a['name'] ?? 'Unknown', playable: false)).toList();
+          return cachedArtists!;
         }
         
         if (parentMediaId == 'tab_favorites') {
+          if (cachedFavorites != null) return cachedFavorites!;
           final songs = await api.getStarred();
-          return songs.map((s) => MediaItem(
+          cachedFavorites = songs.map((s) => MediaItem(
             id: "fav_song_${s.id}",
             title: s.title,
             album: s.album,
@@ -747,6 +769,7 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
             playable: true,
             extras: s.toJson()
           )).toList();
+          return cachedFavorites!;
         }
         
         if (parentMediaId.startsWith('playlist_')) {
@@ -822,9 +845,13 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
           }
         } else if (mediaId.startsWith('fav_song_')) {
           final songId = mediaId.substring(9);
-          queueToPlay = await api.getStarred();
-          startIndex = queueToPlay.indexWhere((s) => s.id == songId);
-          if (startIndex == -1) startIndex = 0;
+          final starred = await api.getStarred();
+          startIndex = starred.indexWhere((s) => s.id == songId);
+          if (startIndex != -1) {
+            // Only play this one song instead of queuing all favorites
+            queueToPlay = [starred[startIndex]];
+            startIndex = 0;
+          }
         }
         
         if (queueToPlay.isNotEmpty) {
