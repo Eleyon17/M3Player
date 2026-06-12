@@ -431,8 +431,10 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       state = state.copyWith(queue: [song, ...state.queue]);
       next();
     } else {
-      // Create a brand new queue that inserts the old currentSong at the front
-      state = state.copyWith(queue: [state.currentSong!, ...state.queue]);
+      // Move the old currentSong to history
+      state = state.copyWith(
+        history: [state.currentSong!, ...state.history],
+      );
       playSong(song);
     }
   }
