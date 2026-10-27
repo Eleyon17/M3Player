@@ -710,6 +710,9 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
     List<MediaItem>? cachedAlbums;
     List<MediaItem>? cachedArtists;
     List<MediaItem>? cachedFavorites;
+    final Map<String, List<MediaItem>> cachedPlaylistSongs = {};
+    final Map<String, List<MediaItem>> cachedAlbumSongs = {};
+    final Map<String, List<MediaItem>> cachedArtistAlbums = {};
 
     // Prefetch in background
     Future.microtask(() async {
@@ -721,100 +724,135 @@ class QueueNotifier extends Notifier<QueueState> with WidgetsBindingObserver {
       } catch (_) {}
     });
 
-    JustAudioBackground.getChildrenCallback = (parentMediaId) async {
+    JustAudioBackground.getChildrenCallback = (parentMediaId, [options]) async {
       try {
+        List<MediaItem> allItems = [];
+
         if (parentMediaId == AudioService.browsableRootId || parentMediaId == 'root') {
-          return [
+          allItems = [
             MediaItem(id: 'tab_playlists', title: 'Playlists', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 1, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
             MediaItem(id: 'tab_albums', title: 'Albums', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 2, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
             MediaItem(id: 'tab_artists', title: 'Artists', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 1, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
             MediaItem(id: 'tab_favorites', title: 'Favorites', playable: false, extras: {'android.media.browse.CONTENT_STYLE_BROWSABLE_HINT': 1, 'android.media.browse.CONTENT_STYLE_PLAYABLE_HINT': 1}),
           ];
-        }
-        
-        if (parentMediaId == 'tab_playlists') {
-          if (cachedPlaylists != null) return cachedPlaylists!;
-          final playlists = await api.getPlaylists();
-          cachedPlaylists = playlists.map((p) => MediaItem(id: "playlist_${p['id']}", title: p['name'] ?? 'Unknown', playable: false)).toList();
-          return cachedPlaylists!;
-        }
-        
-        if (parentMediaId == 'tab_albums') {
-          if (cachedAlbums != null) return cachedAlbums!;
-          final albums = await api.getAlbumList(size: 50); // Get recent albums
-          cachedAlbums = albums.map((a) => MediaItem(
-            id: "album_${a['id']}", 
-            title: a['name'] ?? 'Unknown', 
-            artist: a['artist'], 
-            artUri: Uri.tryParse(api.getCoverUrl(a['id'], size: 500)),
-            playable: false
-          )).toList();
-          return cachedAlbums!;
-        }
-        
-        if (parentMediaId == 'tab_artists') {
-          if (cachedArtists != null) return cachedArtists!;
-          final artists = await api.getArtists();
-          cachedArtists = artists.map((a) => MediaItem(id: "artist_${a['id']}", title: a['name'] ?? 'Unknown', playable: false)).toList();
-          return cachedArtists!;
-        }
-        
-        if (parentMediaId == 'tab_favorites') {
-          if (cachedFavorites != null) return cachedFavorites!;
-          final songs = await api.getStarred();
-          cachedFavorites = songs.map((s) => MediaItem(
-            id: "fav_song_${s.id}",
-            title: s.title,
-            album: s.album,
-            artist: s.artist,
-            artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
-            playable: true,
-            extras: s.toJson()
-          )).toList();
-          return cachedFavorites!;
-        }
-        
-        if (parentMediaId.startsWith('playlist_')) {
+        } else if (parentMediaId == 'tab_playlists') {
+          if (cachedPlaylists != null) {
+            allItems = cachedPlaylists!;
+          } else {
+            final playlists = await api.getPlaylists();
+            cachedPlaylists = playlists.map((p) => MediaItem(id: "playlist_${p['id']}", title: p['name'] ?? 'Unknown', playable: false)).toList();
+            allItems = cachedPlaylists!;
+          }
+        } else if (parentMediaId == 'tab_albums') {
+          if (cachedAlbums != null) {
+            allItems = cachedAlbums!;
+          } else {
+            final albums = await api.getAlbumList(size: 50); // Get recent albums
+            cachedAlbums = albums.map((a) => MediaItem(
+              id: "album_${a['id']}", 
+              title: a['name'] ?? 'Unknown', 
+              artist: a['artist'], 
+              artUri: Uri.tryParse(api.getCoverUrl(a['id'], size: 500)),
+              playable: false
+            )).toList();
+            allItems = cachedAlbums!;
+          }
+        } else if (parentMediaId == 'tab_artists') {
+          if (cachedArtists != null) {
+            allItems = cachedArtists!;
+          } else {
+            final artists = await api.getArtists();
+            cachedArtists = artists.map((a) => MediaItem(id: "artist_${a['id']}", title: a['name'] ?? 'Unknown', playable: false)).toList();
+            allItems = cachedArtists!;
+          }
+        } else if (parentMediaId == 'tab_favorites') {
+          if (cachedFavorites != null) {
+            allItems = cachedFavorites!;
+          } else {
+            final songs = await api.getStarred();
+            cachedFavorites = songs.map((s) => MediaItem(
+              id: "fav_song_${s.id}",
+              title: s.title,
+              album: s.album,
+              artist: s.artist,
+              artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
+              playable: true,
+              extras: s.toJson()
+            )).toList();
+            allItems = cachedFavorites!;
+          }
+        } else if (parentMediaId.startsWith('playlist_')) {
           final id = parentMediaId.substring(9);
-          final songs = await api.getPlaylistSongs(id);
-          return songs.map((s) => MediaItem(
-            id: "playlist_${id}_song_${s.id}",
-            title: s.title,
-            album: s.album,
-            artist: s.artist,
-            artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
-            playable: true,
-            extras: s.toJson()
-          )).toList();
-        }
-        
-        if (parentMediaId.startsWith('album_')) {
+          if (cachedPlaylistSongs.containsKey(id)) {
+            allItems = cachedPlaylistSongs[id]!;
+          } else {
+            final songs = await api.getPlaylistSongs(id);
+            final items = songs.map((s) => MediaItem(
+              id: "playlist_${id}_song_${s.id}",
+              title: s.title,
+              album: s.album,
+              artist: s.artist,
+              artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
+              playable: true,
+              extras: s.toJson()
+            )).toList();
+            cachedPlaylistSongs[id] = items;
+            allItems = items;
+          }
+        } else if (parentMediaId.startsWith('album_')) {
           final id = parentMediaId.substring(6);
-          final songs = await api.getAlbum(id);
-          return songs.map((s) => MediaItem(
-            id: "album_${id}_song_${s.id}",
-            title: s.title,
-            album: s.album,
-            artist: s.artist,
-            artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
-            playable: true,
-            extras: s.toJson()
-          )).toList();
-        }
-        
-        if (parentMediaId.startsWith('artist_')) {
+          if (cachedAlbumSongs.containsKey(id)) {
+            allItems = cachedAlbumSongs[id]!;
+          } else {
+            final songs = await api.getAlbum(id);
+            final items = songs.map((s) => MediaItem(
+              id: "album_${id}_song_${s.id}",
+              title: s.title,
+              album: s.album,
+              artist: s.artist,
+              artUri: Uri.tryParse(api.getCoverUrl(s.albumId ?? s.id, size: 500)),
+              playable: true,
+              extras: s.toJson()
+            )).toList();
+            cachedAlbumSongs[id] = items;
+            allItems = items;
+          }
+        } else if (parentMediaId.startsWith('artist_')) {
           final id = parentMediaId.substring(7);
-          final albums = await api.getArtist(id);
-          return albums.map((a) => MediaItem(
-            id: "album_${a['id']}", 
-            title: a['name'] ?? 'Unknown', 
-            artist: a['artist'], 
-            artUri: Uri.tryParse(api.getCoverUrl(a['id'], size: 500)),
-            playable: false
-          )).toList();
+          if (cachedArtistAlbums.containsKey(id)) {
+            allItems = cachedArtistAlbums[id]!;
+          } else {
+            final albums = await api.getArtist(id);
+            final items = albums.map((a) => MediaItem(
+              id: "album_${a['id']}", 
+              title: a['name'] ?? 'Unknown', 
+              artist: a['artist'], 
+              artUri: Uri.tryParse(api.getCoverUrl(a['id'], size: 500)),
+              playable: false
+            )).toList();
+            cachedArtistAlbums[id] = items;
+            allItems = items;
+          }
         }
+
+        // Handle Android Auto pagination options if provided
+        final page = options?['android.media.browse.extra.PAGE'] as int? ??
+            options?['page'] as int?;
+        final pageSize = options?['android.media.browse.extra.PAGE_SIZE'] as int? ??
+            options?['pageSize'] as int?;
+
+        if (page != null && pageSize != null && pageSize > 0) {
+          final fromIndex = page * pageSize;
+          if (fromIndex >= allItems.length) {
+            return [];
+          }
+          final toIndex = (fromIndex + pageSize).clamp(0, allItems.length);
+          return allItems.sublist(fromIndex, toIndex);
+        }
+
+        return allItems;
       } catch (e) {
-        debugPrint('Error fetching Android Auto children: \$e');
+        debugPrint('Error fetching Android Auto children: $e');
       }
       
       return [];

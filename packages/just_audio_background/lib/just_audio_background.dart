@@ -14,7 +14,7 @@ late SwitchAudioHandler _audioHandler;
 late JustAudioPlatform _platform;
 
 typedef GetChildrenCallback = Future<List<MediaItem>> Function(
-    String parentMediaId);
+    String parentMediaId, [Map<String, dynamic>? options]);
 typedef PlayFromMediaIdCallback = Future<void> Function(String mediaId);
 typedef SkipToQueueItemCallback = Future<void> Function(int index);
 typedef SearchCallback = Future<List<MediaItem>> Function(String query, Map<String, dynamic>? extras);
@@ -443,7 +443,7 @@ class _PlayerAudioHandler extends BaseAudioHandler
   Future<List<MediaItem>> getChildren(String parentMediaId,
       [Map<String, dynamic>? options]) async {
     if (JustAudioBackground.getChildrenCallback != null) {
-      return await JustAudioBackground.getChildrenCallback!(parentMediaId);
+      return await JustAudioBackground.getChildrenCallback!(parentMediaId, options);
     }
     return super.getChildren(parentMediaId, options);
   }

@@ -292,21 +292,22 @@ class _FlippableAlbumArtState extends ConsumerState<InteractiveAlbumArt> with Si
     final bioText = _bio ?? '';
     final isLongBio = bioText.length > _bioDisplayLength;
     final displayBio = isLongBio ? '${bioText.substring(0, _bioDisplayLength)}...' : bioText;
+    final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 10),
-          )
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+    return Material(
+      elevation: 4,
+      shadowColor: Colors.black.withValues(alpha: 0.3),
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(32),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.6),
+            width: 2,
+          ),
+        ),
         child: AspectRatio(
           aspectRatio: 1,
           child: Padding(
@@ -314,94 +315,125 @@ class _FlippableAlbumArtState extends ConsumerState<InteractiveAlbumArt> with Si
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-              Text(
-                widget.song.artist ?? 'Artist Info',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.song.artist ?? 'Artist Info',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                        textAlign: TextAlign.left,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.7)),
+                      onPressed: _toggleFlip,
+                      tooltip: 'Close',
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _isLoadingBio
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              displayBio,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5),
-                            ),
-                            if (isLongBio)
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    setState(() => _bioDisplayLength += 100);
-                                  },
-                                  child: const Text('Read more'),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: _isLoadingBio
+                      ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+                      : SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                displayBio,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  height: 1.5,
+                                  color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.9),
                                 ),
                               ),
-                            
-                            if (_topSongs != null && _topSongs!.isNotEmpty) ...[
-                              const SizedBox(height: 24),
-                              Text("Top Songs", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 12),
+                              if (isLongBio)
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: theme.colorScheme.primary,
+                                    ),
+                                    onPressed: () {
+                                      setState(() => _bioDisplayLength += 100);
+                                    },
+                                    child: const Text('Read more'),
+                                  ),
+                                ),
+                              if (_topSongs != null && _topSongs!.isNotEmpty) ...[
+                                const SizedBox(height: 20),
+                                Text(
+                                  "Top Songs",
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
                                 SizedBox(
-                                  height: 140,
+                                  height: 135,
                                   child: ListView.separated(
                                     clipBehavior: Clip.none,
                                     scrollDirection: Axis.horizontal,
                                     itemCount: _topSongs!.length,
-                                  separatorBuilder: (_, __) => const SizedBox(width: 16),
-                                  itemBuilder: (context, i) {
-                                    final s = _topSongs![i];
-                                    return _HorizontalTile(
-                                      imageUrl: ref.read(navidromeClientProvider).getCoverUrl(s.albumId ?? s.id),
-                                      title: s.title,
-                                      onTap: () {
-                                        ref.read(queueProvider.notifier).insertNext(s);
-                                      },
-                                    );
-                                  },
+                                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                                    itemBuilder: (context, i) {
+                                      final s = _topSongs![i];
+                                      return _HorizontalTile(
+                                        imageUrl: ref.read(navidromeClientProvider).getCoverUrl(s.albumId ?? s.id),
+                                        title: s.title,
+                                        onTap: () {
+                                          ref.read(queueProvider.notifier).insertNext(s);
+                                        },
+                                      );
+                                    },
+                                  ),
                                 ),
-                              ),
-                            ],
-                            if (_topAlbums != null && _topAlbums!.isNotEmpty) ...[
-                              const SizedBox(height: 24),
-                              Text("Top Albums", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 12),
+                              ],
+                              if (_topAlbums != null && _topAlbums!.isNotEmpty) ...[
+                                const SizedBox(height: 20),
+                                Text(
+                                  "Top Albums",
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
                                 SizedBox(
-                                  height: 140,
+                                  height: 135,
                                   child: ListView.separated(
                                     clipBehavior: Clip.none,
                                     scrollDirection: Axis.horizontal,
                                     itemCount: _topAlbums!.length,
-                                  separatorBuilder: (_, __) => const SizedBox(width: 16),
-                                  itemBuilder: (context, i) {
-                                    final a = _topAlbums![i];
-                                    return _HorizontalTile(
-                                      imageUrl: ref.read(navidromeClientProvider).getCoverUrl(a['id']),
-                                      title: a['name'] ?? a['title'] ?? 'Unknown',
-                                      onTap: () async {
-                                        final api = ref.read(navidromeClientProvider);
-                                        final albumSongs = await api.getAlbum(a['id']);
-                                        ref.read(queueProvider.notifier).addListToQueue(albumSongs);
-                                      },
-                                    );
-                                  },
+                                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                                    itemBuilder: (context, i) {
+                                      final a = _topAlbums![i];
+                                      return _HorizontalTile(
+                                        imageUrl: ref.read(navidromeClientProvider).getCoverUrl(a['id']),
+                                        title: a['name'] ?? a['title'] ?? 'Unknown',
+                                        onTap: () async {
+                                          final api = ref.read(navidromeClientProvider);
+                                          final albumSongs = await api.getAlbum(a['id']);
+                                          ref.read(queueProvider.notifier).addListToQueue(albumSongs);
+                                        },
+                                      );
+                                    },
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
@@ -439,7 +471,12 @@ class _HorizontalTileState extends State<_HorizontalTile> {
                 curve: Curves.easeOutCubic,
                 transform: _isHovered ? (Matrix4.identity()..translate(0.0, -5.0)) : Matrix4.identity(),
                 decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
                   boxShadow: _isHovered
                       ? [
                           BoxShadow(
@@ -468,9 +505,9 @@ class _HorizontalTileState extends State<_HorizontalTile> {
               const SizedBox(height: 8),
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 200),
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: _isHovered ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                  color: _isHovered ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onPrimaryContainer,
                 ),
                 child: Text(
                   widget.title,
